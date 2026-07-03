@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QuestLog — theme variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Orbitron:wght@600;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Press+Start+2P&family=VT323&family=Barlow+Condensed:wght@600;700&family=Archivo:wght@400;500;600&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #17181c; color: #e8e8e8; font-family: 'Archivo', sans-serif; padding: 28px 20px 60px; }
+  .intro { max-width: 1180px; margin: 0 auto 22px; }
+  .intro h1 { font-size: 22px; letter-spacing: 0.02em; }
+  .intro p { color: #9aa; font-size: 14px; margin-top: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 22px; max-width: 1180px; margin: 0 auto; }
+  .variant { border-radius: 12px; overflow: hidden; border: 1px solid #2c2e35; }
+  .v-label { padding: 12px 16px; background: #1e2026; border-bottom: 1px solid #2c2e35; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .v-label b { font-size: 15px; }
+  .v-label small { color: #99a; font-size: 11.5px; text-align: right; }
+
+  /* shared mockup skeleton */
+  .mock { padding: 18px 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+  .m-hud { display: flex; align-items: center; gap: 12px; }
+  .m-badge { width: 44px; height: 44px; flex: none; display: grid; place-items: center; font-size: 18px; font-weight: 700; }
+  .m-mid { flex: 1; }
+  .m-rankline { display: flex; justify-content: space-between; align-items: baseline; }
+  .m-rank { font-size: 14px; }
+  .m-xpnum { font-size: 10.5px; }
+  .m-track { height: 8px; margin-top: 6px; overflow: hidden; }
+  .m-fill { height: 100%; width: 42%; }
+  .m-streak { flex: none; text-align: center; padding: 4px 10px; }
+  .m-streak b { display: block; font-size: 16px; }
+  .m-streak span { font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .m-quest { display: flex; align-items: center; gap: 11px; padding: 12px 13px; }
+  .m-qname { font-size: 14px; display: block; }
+  .m-qdesc { font-size: 11.5px; display: block; }
+  .m-qbody { flex: 1; }
+  .m-qxp { font-size: 11.5px; }
+  .m-check { width: 24px; height: 24px; display: grid; place-items: center; font-size: 14px; }
+  .m-calrow { display: flex; gap: 5px; }
+  .m-cal { width: 44px; height: 44px; display: grid; place-items: center; font-size: 12.5px; position: relative; }
+  .m-boss { display: flex; align-items: center; gap: 12px; padding: 10px 13px; }
+  .m-bw { font-size: 15px; font-weight: 700; }
+  .m-bname { font-size: 13px; display: block; }
+  .m-btip { font-size: 11.5px; display: block; }
+  .m-bstate { margin-left: auto; font-size: 10.5px; letter-spacing: 0.08em; }
+  .m-btn { align-self: flex-start; border: none; padding: 10px 18px; font-size: 13px; cursor: default; }
+
+  /* ═══ A — EMBER FORGE ═══ */
+  .v-forge .mock { background: #14100c; color: #f4ecdd; font-family: 'IBM Plex Sans', sans-serif; }
+  .v-forge .m-badge { background: linear-gradient(160deg, #ffcf6e, #f2a41f 40%, #c47c14); color: #2a1c04; font-family: 'Chakra Petch'; clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%); }
+  .v-forge .m-rank { font-family: 'Chakra Petch'; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .v-forge .m-xpnum, .v-forge .m-qxp, .v-forge .m-cal, .v-forge .m-bw, .v-forge .m-bstate, .v-forge .m-streak { font-family: 'IBM Plex Mono', monospace; }
+  .v-forge .m-track { background: #2a2118; clip-path: polygon(3px 0, 100% 0, calc(100% - 3px) 100%, 0 100%); }
+  .v-forge .m-fill { background: linear-gradient(90deg, #c47c14, #f2a41f, #ffcf6e); }
+  .v-forge .m-streak { background: #2a2118; border: 1px solid rgba(224,186,128,.2); border-radius: 3px; }
+  .v-forge .m-streak b { color: #f2a41f; }
+  .v-forge .m-streak span, .v-forge .m-xpnum, .v-forge .m-qdesc, .v-forge .m-btip { color: #b0a288; }
+  .v-forge .m-quest, .v-forge .m-boss { background: linear-gradient(180deg, #211a13, #1e1812); border: 1px solid rgba(224,186,128,.16); border-radius: 6px; }
+  .v-forge .m-quest.done { border-color: rgba(139,197,81,.5); }
+  .v-forge .m-qname { font-family: 'Chakra Petch'; font-weight: 600; }
+  .v-forge .done .m-qname { color: #b0a288; text-decoration: line-through; }
+  .v-forge .m-check { border: 2px solid #7c6f59; clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px); color: transparent; }
+  .v-forge .done .m-check { border-color: #8bc551; background: rgba(139,197,81,.16); color: #8bc551; }
+  .v-forge .done .m-qxp { color: #8bc551; }
+  .v-forge .m-cal { background: #2a2118; border-radius: 4px; color: #b0a288; }
+  .v-forge .m-cal.bank { background: rgba(139,197,81,.2); color: #8bc551; border: 1px solid rgba(139,197,81,.6); font-weight: 600; }
+  .v-forge .m-cal.perfect { background: linear-gradient(160deg, #ffcf6e, #f2a41f 55%, #c47c14); color: #2a1c04; font-weight: 600; }
+  .v-forge .m-cal.today { box-shadow: 0 0 0 2px #f4ecdd; }
+  .v-forge .m-cal.future { background: transparent; border: 1px dashed rgba(224,186,128,.2); opacity: .5; }
+  .v-forge .m-bname { font-family: 'Chakra Petch'; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .v-forge .m-bw, .v-forge .m-bstate { color: #f2a41f; }
+  .v-forge .m-btn { background: linear-gradient(160deg, #ffcf6e, #f2a41f 45%, #c47c14); color: #2a1c04; font-family: 'Chakra Petch'; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+
+  /* ═══ B — NEON ARCADE ═══ */
+  .v-neon .mock { background: radial-gradient(700px 300px at 70% -10%, rgba(240,85,159,.14), transparent 60%), #120f1e; color: #ece9f7; font-family: 'Rajdhani', sans-serif; font-weight: 500; }
+  .v-neon .m-badge { background: #1c1732; border: 2px solid #4de3ff; color: #4de3ff; font-family: 'Orbitron'; border-radius: 50%; box-shadow: 0 0 14px rgba(77,227,255,.45), inset 0 0 8px rgba(77,227,255,.25); }
+  .v-neon .m-rank { font-family: 'Orbitron'; font-weight: 800; font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.14em; color: #4de3ff; text-shadow: 0 0 10px rgba(77,227,255,.6); }
+  .v-neon .m-xpnum, .v-neon .m-qxp, .v-neon .m-cal, .v-neon .m-bw, .v-neon .m-bstate, .v-neon .m-streak { font-family: 'Share Tech Mono', monospace; }
+  .v-neon .m-track { background: #241d40; border-radius: 99px; }
+  .v-neon .m-fill { background: linear-gradient(90deg, #f0559f, #4de3ff); box-shadow: 0 0 12px rgba(240,85,159,.6); border-radius: 99px; }
+  .v-neon .m-streak { background: #1c1732; border: 1px solid rgba(240,85,159,.5); border-radius: 8px; }
+  .v-neon .m-streak b { color: #f0559f; text-shadow: 0 0 10px rgba(240,85,159,.7); }
+  .v-neon .m-streak span, .v-neon .m-xpnum, .v-neon .m-qdesc, .v-neon .m-btip { color: #8d86ad; }
+  .v-neon .m-quest, .v-neon .m-boss { background: rgba(28,23,50,.75); border: 1px solid rgba(77,227,255,.22); border-radius: 10px; }
+  .v-neon .m-quest.done { border-color: rgba(240,85,159,.55); box-shadow: 0 0 14px rgba(240,85,159,.12); }
+  .v-neon .m-qname { font-weight: 700; font-size: 15.5px; letter-spacing: 0.03em; text-transform: uppercase; }
+  .v-neon .done .m-qname { color: #8d86ad; text-decoration: line-through; }
+  .v-neon .m-check { border: 2px solid #514a75; border-radius: 50%; color: transparent; }
+  .v-neon .done .m-check { border-color: #f0559f; color: #f0559f; box-shadow: 0 0 10px rgba(240,85,159,.5); }
+  .v-neon .done .m-qxp { color: #f0559f; }
+  .v-neon .m-cal { background: #1c1732; border-radius: 8px; color: #8d86ad; }
+  .v-neon .m-cal.bank { background: rgba(77,227,255,.14); color: #4de3ff; border: 1px solid rgba(77,227,255,.55); }
+  .v-neon .m-cal.perfect { background: linear-gradient(160deg, #f0559f, #a13bcf); color: #fff; box-shadow: 0 0 12px rgba(240,85,159,.5); }
+  .v-neon .m-cal.today { box-shadow: 0 0 0 2px #ece9f7; }
+  .v-neon .m-cal.future { background: transparent; border: 1px dashed #3a3160; opacity: .6; }
+  .v-neon .m-bname { font-family: 'Orbitron'; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.1em; }
+  .v-neon .m-bw { color: #4de3ff; }
+  .v-neon .m-bstate { color: #f0559f; }
+  .v-neon .m-btn { background: linear-gradient(90deg, #f0559f, #a13bcf); color: #fff; font-family: 'Orbitron'; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; border-radius: 8px; box-shadow: 0 0 16px rgba(240,85,159,.45); }
+
+  /* ═══ C — PIXEL QUEST ═══ */
+  .v-pixel .mock { background: #0c1410; color: #d8f5c8; font-family: 'VT323', monospace; font-size: 17px; }
+  .v-pixel .m-badge { background: #1a2a1c; border: 3px solid #7ce27a; color: #7ce27a; font-family: 'Press Start 2P'; font-size: 13px; box-shadow: 4px 4px 0 #05170c; }
+  .v-pixel .m-rank { font-family: 'Press Start 2P'; font-size: 9.5px; color: #7ce27a; }
+  .v-pixel .m-xpnum, .v-pixel .m-qxp, .v-pixel .m-streak span { color: #7fa87a; }
+  .v-pixel .m-track { background: #1a2a1c; border: 2px solid #2c4530; }
+  .v-pixel .m-fill { background: repeating-linear-gradient(90deg, #ffb635 0 8px, #e89112 8px 16px); }
+  .v-pixel .m-streak { background: #1a2a1c; border: 2px solid #2c4530; box-shadow: 3px 3px 0 #05170c; }
+  .v-pixel .m-streak b { color: #ffb635; font-family: 'Press Start 2P'; font-size: 12px; }
+  .v-pixel .m-quest, .v-pixel .m-boss { background: #12201576; border: 2px solid #2c4530; box-shadow: 4px 4px 0 #05170c; }
+  .v-pixel .m-quest.done { border-color: #7ce27a; }
+  .v-pixel .m-qname { font-size: 18px; letter-spacing: 0.02em; }
+  .v-pixel .done .m-qname { color: #7fa87a; text-decoration: line-through; }
+  .v-pixel .m-qdesc, .v-pixel .m-btip { color: #7fa87a; font-size: 15px; }
+  .v-pixel .m-check { border: 3px solid #40603f; color: transparent; }
+  .v-pixel .done .m-check { border-color: #7ce27a; background: #1f3d22; color: #7ce27a; }
+  .v-pixel .done .m-qxp { color: #7ce27a; }
+  .v-pixel .m-cal { background: #1a2a1c; border: 2px solid #2c4530; color: #7fa87a; font-size: 15px; }
+  .v-pixel .m-cal.bank { background: #1f3d22; color: #7ce27a; border-color: #7ce27a; }
+  .v-pixel .m-cal.perfect { background: #ffb635; color: #241a02; border-color: #ffdc8a; }
+  .v-pixel .m-cal.today { box-shadow: 0 0 0 2px #d8f5c8; }
+  .v-pixel .m-cal.future { opacity: .45; border-style: dashed; background: transparent; }
+  .v-pixel .m-bname { font-family: 'Press Start 2P'; font-size: 8.5px; line-height: 1.6; }
+  .v-pixel .m-bw { color: #ffb635; }
+  .v-pixel .m-bstate { color: #ffb635; font-family: 'Press Start 2P'; font-size: 7.5px; }
+  .v-pixel .m-btn { background: #ffb635; color: #241a02; font-family: 'Press Start 2P'; font-size: 9px; border: none; box-shadow: 4px 4px 0 #05170c; }
+
+  /* ═══ D — PAPER ATHLETE ═══ */
+  .v-paper .mock { background: #f4efe4; color: #20262e; font-family: 'Archivo', sans-serif; }
+  .v-paper .m-badge { background: #20262e; color: #f4efe4; font-family: 'Barlow Condensed'; font-size: 20px; border-radius: 10px; }
+  .v-paper .m-rank { font-family: 'Barlow Condensed'; font-weight: 700; font-size: 17px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .v-paper .m-xpnum, .v-paper .m-qxp, .v-paper .m-cal, .v-paper .m-bw, .v-paper .m-bstate, .v-paper .m-streak b { font-family: 'Spline Sans Mono', monospace; }
+  .v-paper .m-track { background: #e2dac9; border-radius: 99px; }
+  .v-paper .m-fill { background: #e8543f; border-radius: 99px; }
+  .v-paper .m-streak { background: #fff; border: 1.5px solid #20262e; border-radius: 10px; box-shadow: 3px 3px 0 rgba(32,38,46,.9); }
+  .v-paper .m-streak b { color: #e8543f; }
+  .v-paper .m-streak span, .v-paper .m-xpnum, .v-paper .m-qdesc, .v-paper .m-btip { color: #75705f; }
+  .v-paper .m-quest, .v-paper .m-boss { background: #fffdf7; border: 1.5px solid #20262e; border-radius: 12px; box-shadow: 3px 3px 0 rgba(32,38,46,.9); }
+  .v-paper .m-quest.done { background: #eef4e4; }
+  .v-paper .m-qname { font-family: 'Barlow Condensed'; font-weight: 700; font-size: 17px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .v-paper .done .m-qname { color: #75705f; text-decoration: line-through; }
+  .v-paper .m-check { border: 2px solid #b9b19c; border-radius: 8px; color: transparent; }
+  .v-paper .done .m-check { border-color: #3f8f4f; background: #d9ecd6; color: #3f8f4f; }
+  .v-paper .done .m-qxp { color: #3f8f4f; }
+  .v-paper .m-cal { background: #fffdf7; border: 1.5px solid #d8d0bd; border-radius: 9px; color: #75705f; }
+  .v-paper .m-cal.bank { background: #d9ecd6; color: #2f6f3d; border-color: #3f8f4f; font-weight: 600; }
+  .v-paper .m-cal.perfect { background: #e8543f; color: #fff; border-color: #b93b2a; font-weight: 600; }
+  .v-paper .m-cal.today { box-shadow: 0 0 0 2px #20262e; }
+  .v-paper .m-cal.future { opacity: .5; border-style: dashed; background: transparent; }
+  .v-paper .m-bname { font-family: 'Barlow Condensed'; font-weight: 700; font-size: 16px; text-transform: uppercase; }
+  .v-paper .m-bw { color: #e8543f; }
+  .v-paper .m-bstate { color: #e8543f; font-weight: 600; }
+  .v-paper .m-btn { background: #e8543f; color: #fff; font-family: 'Barlow Condensed'; font-weight: 700; font-size: 16px; text-transform: uppercase; letter-spacing: 0.06em; border-radius: 10px; box-shadow: 3px 3px 0 rgba(32,38,46,.9); }
+</style>
+</head>
+<body>
+  <div class="intro">
+    <h1>QuestLog — pick your world</h1>
+    <p>Four theme directions, same app. Each shows the HUD, quests, streak calendar, a boss row and the main button in that theme's palette and fonts.</p>
+  </div>
+  <div class="grid">
+
+    <div class="variant v-forge">
+      <div class="v-label"><b>A · Ember Forge</b><small>warm near-black + molten gold · Chakra Petch / IBM Plex</small></div>
+      <div class="mock">
+        <div class="m-hud">
+          <div class="m-badge">8</div>
+          <div class="m-mid">
+            <div class="m-rankline"><span class="m-rank">Champion · Lv 8</span><span class="m-xpnum">295 / 800 XP</span></div>
+            <div class="m-track"><div class="m-fill"></div></div>
+          </div>
+          <div class="m-streak"><b>6</b><span>streak</span></div>
+        </div>
+        <div class="m-quest done"><span>🏋️</span><span class="m-qbody"><span class="m-qname">Gym session</span><span class="m-qdesc">Show up. 40 minutes counts.</span></span><span class="m-qxp">+30 XP</span><span class="m-check">✓</span></div>
+        <div class="m-quest"><span>😴</span><span class="m-qbody"><span class="m-qname">In bed by 11:30</span><span class="m-qdesc">Sleep is a fat-loss stat.</span></span><span class="m-qxp">10 XP</span><span class="m-check">✓</span></div>
+        <div class="m-calrow"><div class="m-cal bank">1</div><div class="m-cal perfect">2</div><div class="m-cal">3</div><div class="m-cal bank today">4</div><div class="m-cal future">5</div></div>
+        <div class="m-boss"><span class="m-bw">140</span><span><span class="m-bname">The Gatekeeper</span><span class="m-btip">Mostly water weight — strike fast.</span></span><span class="m-bstate">IN FIGHT</span></div>
+        <button class="m-btn">Log +25 XP</button>
+      </div>
+    </div>
+
+    <div class="variant v-neon">
+      <div class="v-label"><b>B · Neon Arcade</b><small>synthwave violet + magenta/cyan glow · Orbitron / Rajdhani</small></div>
+      <div class="mock">
+        <div class="m-hud">
+          <div class="m-badge">8</div>
+          <div class="m-mid">
+            <div class="m-rankline"><span class="m-rank">Champion · Lv 8</span><span class="m-xpnum">295 / 800 XP</span></div>
+            <div class="m-track"><div class="m-fill"></div></div>
+          </div>
+          <div class="m-streak"><b>6</b><span>streak</span></div>
+        </div>
+        <div class="m-quest done"><span>🏋️</span><span class="m-qbody"><span class="m-qname">Gym session</span><span class="m-qdesc">Show up. 40 minutes counts.</span></span><span class="m-qxp">+30 XP</span><span class="m-check">✓</span></div>
+        <div class="m-quest"><span>😴</span><span class="m-qbody"><span class="m-qname">In bed by 11:30</span><span class="m-qdesc">Sleep is a fat-loss stat.</span></span><span class="m-qxp">10 XP</span><span class="m-check">✓</span></div>
+        <div class="m-calrow"><div class="m-cal bank">1</div><div class="m-cal perfect">2</div><div class="m-cal">3</div><div class="m-cal bank today">4</div><div class="m-cal future">5</div></div>
+        <div class="m-boss"><span class="m-bw">140</span><span><span class="m-bname">The Gatekeeper</span><span class="m-btip">Mostly water weight — strike fast.</span></span><span class="m-bstate">IN FIGHT</span></div>
+        <button class="m-btn">Log +25 XP</button>
+      </div>
+    </div>
+
+    <div class="variant v-pixel">
+      <div class="v-label"><b>C · Pixel Quest</b><small>8-bit phosphor terminal · Press Start 2P / VT323</small></div>
+      <div class="mock">
+        <div class="m-hud">
+          <div class="m-badge">8</div>
+          <div class="m-mid">
+            <div class="m-rankline"><span class="m-rank">CHAMPION LV8</span><span class="m-xpnum">295/800 XP</span></div>
+            <div class="m-track"><div class="m-fill"></div></div>
+          </div>
+          <div class="m-streak"><b>6</b><span>streak</span></div>
+        </div>
+        <div class="m-quest done"><span>🏋️</span><span class="m-qbody"><span class="m-qname">Gym session</span><span class="m-qdesc">Show up. 40 minutes counts.</span></span><span class="m-qxp">+30 XP</span><span class="m-check">✓</span></div>
+        <div class="m-quest"><span>😴</span><span class="m-qbody"><span class="m-qname">In bed by 11:30</span><span class="m-qdesc">Sleep is a fat-loss stat.</span></span><span class="m-qxp">10 XP</span><span class="m-check">✓</span></div>
+        <div class="m-calrow"><div class="m-cal bank">1</div><div class="m-cal perfect">2</div><div class="m-cal">3</div><div class="m-cal bank today">4</div><div class="m-cal future">5</div></div>
+        <div class="m-boss"><span class="m-bw">140</span><span><span class="m-bname">THE GATEKEEPER</span><span class="m-btip">Mostly water weight — strike fast.</span></span><span class="m-bstate">FIGHT</span></div>
+        <button class="m-btn">LOG +25XP</button>
+      </div>
+    </div>
+
+    <div class="variant v-paper">
+      <div class="v-label"><b>D · Paper Athlete</b><small>light training-journal, ink + coral · Barlow Condensed / Archivo</small></div>
+      <div class="mock">
+        <div class="m-hud">
+          <div class="m-badge">8</div>
+          <div class="m-mid">
+            <div class="m-rankline"><span class="m-rank">Champion · Lv 8</span><span class="m-xpnum">295 / 800 XP</span></div>
+            <div class="m-track"><div class="m-fill"></div></div>
+          </div>
+          <div class="m-streak"><b>6</b><span>streak</span></div>
+        </div>
+        <div class="m-quest done"><span>🏋️</span><span class="m-qbody"><span class="m-qname">Gym session</span><span class="m-qdesc">Show up. 40 minutes counts.</span></span><span class="m-qxp">+30 XP</span><span class="m-check">✓</span></div>
+        <div class="m-quest"><span>😴</span><span class="m-qbody"><span class="m-qname">In bed by 11:30</span><span class="m-qdesc">Sleep is a fat-loss stat.</span></span><span class="m-qxp">10 XP</span><span class="m-check">✓</span></div>
+        <div class="m-calrow"><div class="m-cal bank">1</div><div class="m-cal perfect">2</div><div class="m-cal">3</div><div class="m-cal bank today">4</div><div class="m-cal future">5</div></div>
+        <div class="m-boss"><span class="m-bw">140</span><span><span class="m-bname">The Gatekeeper</span><span class="m-btip">Mostly water weight — strike fast.</span></span><span class="m-bstate">IN FIGHT</span></div>
+        <button class="m-btn">Log +25 XP</button>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

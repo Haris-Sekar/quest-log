@@ -1,0 +1,921 @@
+<title>QuestLog — 150 → 90</title>
+<style>
+  /* ── Game HUD: committed single dark theme ─────────────────────────── */
+  :root {
+    --bg: #10141d;
+    --surface: #1a2130;
+    --surface-2: #232b3e;
+    --edge: rgba(150, 162, 186, 0.16);
+    --ink: #eaedf5;
+    --muted: #96a0b6;
+    --faint: #6b7590;
+    --gold: #f2b63c;
+    --gold-deep: #c98f1e;
+    --good: #53cd8c;
+    --blue: #64a8ef;
+    --rare: #4e9bf5;
+    --epic: #a873f5;
+    --danger: #ef6e5e;
+    --disp: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, monospace;
+  }
+  html { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--disp);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding-bottom: 76px; /* room for tab bar */
+  }
+  .shell { max-width: 520px; margin: 0 auto; padding: 0 14px; }
+
+  /* ── HUD header ── */
+  .hud {
+    position: sticky; top: 0; z-index: 20;
+    background: linear-gradient(180deg, #141a27 0%, rgba(20,26,39,0.96) 100%);
+    border-bottom: 1px solid var(--edge);
+    backdrop-filter: blur(6px);
+  }
+  .hud-inner { max-width: 520px; margin: 0 auto; padding: 12px 14px 10px; display: flex; gap: 12px; align-items: center; }
+  .lvl-badge {
+    width: 46px; height: 46px; flex: none;
+    display: grid; place-items: center;
+    background: linear-gradient(160deg, var(--gold) 0%, var(--gold-deep) 100%);
+    color: #241a05; font-family: var(--mono); font-weight: 700; font-size: 19px;
+    clip-path: polygon(50% 0%, 95% 25%, 95% 75%, 50% 100%, 5% 75%, 5% 25%);
+  }
+  .hud-mid { flex: 1; min-width: 0; }
+  .rank-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .rank-name { font-weight: 700; font-size: 15px; letter-spacing: 0.02em; }
+  .xp-num { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .xp-track { margin-top: 6px; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+  .xp-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold-deep), var(--gold)); transition: width 0.4s ease; }
+  .streak-chip {
+    flex: none; text-align: center; font-family: var(--mono);
+    background: var(--surface-2); border: 1px solid var(--edge); border-radius: 10px;
+    padding: 5px 10px; min-width: 44px;
+  }
+  .streak-chip b { display: block; font-size: 17px; color: var(--gold); }
+  .streak-chip span { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
+  /* ── Common blocks ── */
+  .eyebrow { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--faint); margin: 22px 0 8px; }
+  .card { background: var(--surface); border: 1px solid var(--edge); border-radius: 14px; padding: 14px; }
+  .card + .card { margin-top: 10px; }
+  button { font: inherit; cursor: pointer; }
+  input { font: inherit; }
+
+  /* ── Today: weigh-in ── */
+  .weigh { display: flex; align-items: center; gap: 14px; }
+  .weigh-now { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .weigh-now b { font-size: 30px; font-weight: 700; }
+  .weigh-now small { color: var(--muted); font-size: 12px; display: block; }
+  .weigh-form { margin-left: auto; display: flex; gap: 6px; }
+  .weigh-form input {
+    width: 74px; padding: 9px 10px; border-radius: 10px;
+    border: 1px solid var(--edge); background: var(--bg); color: var(--ink);
+    font-family: var(--mono); font-size: 15px;
+  }
+  .btn {
+    border: none; border-radius: 10px; padding: 9px 14px; font-weight: 700; font-size: 14px;
+    background: var(--gold); color: #241a05;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn.ghost { background: var(--surface-2); color: var(--ink); border: 1px solid var(--edge); }
+  .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+  .logged-tag { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--good); }
+
+  /* ── Today: quests ── */
+  .quest {
+    width: 100%; text-align: left; display: flex; align-items: center; gap: 12px;
+    background: var(--surface); border: 1px solid var(--edge); border-radius: 14px;
+    padding: 13px 14px; color: var(--ink); margin-top: 8px;
+    transition: border-color 0.15s;
+  }
+  .quest .q-icon { font-size: 22px; flex: none; width: 30px; text-align: center; }
+  .quest .q-body { flex: 1; min-width: 0; }
+  .quest .q-name { font-weight: 650; font-size: 15px; }
+  .quest .q-desc { font-size: 12px; color: var(--muted); }
+  .quest .q-xp { font-family: var(--mono); font-size: 12px; color: var(--faint); flex: none; }
+  .quest .q-check {
+    flex: none; width: 26px; height: 26px; border-radius: 8px;
+    border: 2px solid var(--faint); display: grid; place-items: center;
+    font-size: 15px; color: transparent;
+  }
+  .quest.done { border-color: rgba(83, 205, 140, 0.45); }
+  .quest.done .q-check { border-color: var(--good); background: rgba(83, 205, 140, 0.15); color: var(--good); }
+  .quest.done .q-name { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(150,162,186,0.5); }
+  .quest.done .q-xp { color: var(--good); }
+
+  .day-meter { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .day-meter .track { flex: 1; height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+  .day-meter .fill { height: 100%; background: var(--good); border-radius: 4px; transition: width 0.3s; }
+  .day-meter .label { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .streak-note { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .streak-note.safe { color: var(--good); }
+
+  /* ── Streak calendar ── */
+  .cal-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .cal-title { font-weight: 700; font-size: 14px; }
+  .cal-sub { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .cal-nav { display: flex; gap: 6px; }
+  .cal-nav button {
+    width: 34px; height: 34px; border-radius: 9px; border: 1px solid var(--edge);
+    background: var(--surface-2); color: var(--ink); font-size: 17px; line-height: 1;
+  }
+  .cal-nav button:disabled { opacity: 0.35; cursor: default; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { text-align: center; font-family: var(--mono); font-size: 9px; color: var(--faint); text-transform: uppercase; padding-bottom: 2px; }
+  .cal-day {
+    position: relative; aspect-ratio: 1; border-radius: 9px;
+    display: grid; place-items: center;
+    font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 12.5px;
+    color: var(--muted); background: var(--surface-2); border: 1px solid transparent;
+  }
+  .cal-day.out { visibility: hidden; }
+  .cal-day.future { opacity: 0.35; background: transparent; border: 1px dashed var(--edge); }
+  .cal-day.pre { opacity: 0.3; background: transparent; }
+  .cal-day.part { border-color: rgba(83, 205, 140, 0.5); color: var(--ink); }
+  .cal-day.bank { background: rgba(83, 205, 140, 0.22); border-color: rgba(83, 205, 140, 0.6); color: var(--good); font-weight: 700; }
+  .cal-day.perfect { background: linear-gradient(160deg, var(--gold), var(--gold-deep)); color: #241a05; font-weight: 700; }
+  .cal-day.today { box-shadow: 0 0 0 2px var(--ink); }
+  .cal-day .w-dot { position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; border-radius: 50%; background: var(--blue); }
+  .cal-legend { display: flex; flex-wrap: wrap; gap: 10px 14px; margin-top: 12px; font-size: 10.5px; color: var(--muted); font-family: var(--mono); }
+  .cal-legend .k { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+
+  .nudge { border-color: rgba(242, 182, 60, 0.4); background: linear-gradient(180deg, rgba(242,182,60,0.08), transparent); }
+  .nudge b { color: var(--gold); }
+  .nudge p { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
+
+  /* ── Progress ── */
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .stat { background: var(--surface); border: 1px solid var(--edge); border-radius: 14px; padding: 12px 10px; text-align: center; }
+  .stat b { display: block; font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 22px; }
+  .stat span { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .stat .down { color: var(--good); }
+  .chart-wrap { position: relative; }
+  .chart-wrap svg { display: block; width: 100%; height: auto; }
+  .chart-tip {
+    position: absolute; pointer-events: none; display: none;
+    background: var(--surface-2); border: 1px solid var(--edge); border-radius: 8px;
+    padding: 4px 8px; font-family: var(--mono); font-size: 11px; white-space: nowrap;
+    transform: translate(-50%, -130%);
+  }
+  .chart-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 28px 8px; }
+
+  .boss { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--edge); }
+  .boss:last-child { border-bottom: none; }
+  .boss .b-w { font-family: var(--mono); font-weight: 700; font-size: 15px; width: 44px; flex: none; }
+  .boss .b-name { font-weight: 650; font-size: 14px; }
+  .boss .b-tip { font-size: 12px; color: var(--muted); }
+  .boss .b-state { margin-left: auto; font-family: var(--mono); font-size: 11px; flex: none; }
+  .boss.dead { opacity: 0.55; }
+  .boss.dead .b-name { text-decoration: line-through; }
+  .boss.dead .b-state { color: var(--good); }
+  .boss.active .b-w { color: var(--gold); }
+  .boss.active .b-state { color: var(--gold); }
+  .boss.locked { opacity: 0.4; }
+
+  /* ── Awards ── */
+  .ach-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ach { background: var(--surface); border: 1px solid var(--edge); border-radius: 14px; padding: 12px; }
+  .ach .a-icon {
+    width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 20px; background: var(--surface-2); border: 2px solid var(--faint); margin-bottom: 8px;
+  }
+  .ach .a-name { font-weight: 700; font-size: 13px; line-height: 1.3; }
+  .ach .a-desc { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .ach .a-meta { font-family: var(--mono); font-size: 10px; margin-top: 7px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .ach.locked { opacity: 0.45; }
+  .ach.locked .a-icon { filter: grayscale(1); }
+  .ach.r-common .a-icon { border-color: var(--faint); }    .ach.r-common .a-meta { color: var(--muted); }
+  .ach.r-rare .a-icon { border-color: var(--rare); }        .ach.r-rare .a-meta { color: var(--rare); }
+  .ach.r-epic .a-icon { border-color: var(--epic); }        .ach.r-epic .a-meta { color: var(--epic); }
+  .ach.r-legendary .a-icon { border-color: var(--gold); box-shadow: 0 0 12px rgba(242,182,60,0.35); }
+  .ach.r-legendary .a-meta { color: var(--gold); }
+
+  /* ── Plan tab ── */
+  .plan p, .plan li { font-size: 13.5px; }
+  .plan li { margin-bottom: 6px; }
+  .plan h3 { font-size: 14px; margin: 0 0 8px; }
+  .plan table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .plan th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--faint); text-align: left; padding: 4px 6px; }
+  .plan td { padding: 5px 6px; border-top: 1px solid var(--edge); vertical-align: top; }
+  .ok { color: var(--good); } .no { color: var(--danger); }
+  .settings-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .settings-row label { font-size: 13px; color: var(--muted); }
+  .settings-row input { width: 70px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--edge); background: var(--bg); color: var(--ink); font-family: var(--mono); }
+
+  /* ── Tab bar ── */
+  .tabbar {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+    background: #141a27; border-top: 1px solid var(--edge);
+    display: flex; justify-content: center;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tabbar .tabs { display: flex; width: 100%; max-width: 520px; }
+  .tab-btn {
+    flex: 1; background: none; border: none; color: var(--faint);
+    padding: 9px 0 10px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .tab-btn .t-ico { font-size: 20px; }
+  .tab-btn .t-lbl { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .tab-btn.on { color: var(--gold); }
+  .tab-btn:focus-visible, .quest:focus-visible, .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%) translateY(20px);
+    background: var(--surface-2); border: 1px solid var(--gold); border-radius: 12px;
+    padding: 10px 16px; z-index: 40; opacity: 0; pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s; max-width: 88vw;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast b { color: var(--gold); }
+  .toast small { display: block; color: var(--muted); font-size: 12px; }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  section[hidden] { display: none; }
+  .date-line { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-top: 16px; text-transform: uppercase; letter-spacing: 0.1em; }
+</style>
+
+<header class="hud">
+  <div class="hud-inner">
+    <div class="lvl-badge" id="lvlBadge">1</div>
+    <div class="hud-mid">
+      <div class="rank-line">
+        <span class="rank-name" id="rankName">Rookie</span>
+        <span class="xp-num" id="xpNum">0 / 100 XP</span>
+      </div>
+      <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+    </div>
+    <div class="streak-chip"><b id="streakNum">0</b><span>streak</span></div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <!-- ═══ TODAY ═══ -->
+  <section id="tab-today">
+    <div class="date-line" id="dateLine"></div>
+
+    <div class="eyebrow">Weigh-in</div>
+    <div class="card">
+      <div class="weigh">
+        <div class="weigh-now">
+          <b id="curWeight">—</b> kg
+          <small id="weighHint">weekly · morning · before food</small>
+        </div>
+        <div class="weigh-form" id="weighForm">
+          <input id="weightInput" type="number" inputmode="decimal" step="0.1" min="40" max="300" placeholder="kg" aria-label="Weight in kg">
+          <button class="btn" id="logWeightBtn">Log +25xp</button>
+        </div>
+        <span class="logged-tag" id="weighDone" hidden>✓ logged today</span>
+      </div>
+    </div>
+
+    <div class="card nudge" id="nudgeCard" hidden></div>
+
+    <div class="eyebrow">Daily quests</div>
+    <div id="questList"></div>
+
+    <div class="card" style="margin-top:10px">
+      <div class="day-meter">
+        <div class="track"><div class="fill" id="dayFill" style="width:0%"></div></div>
+        <span class="label" id="dayLabel">0 / 6</span>
+      </div>
+      <div class="streak-note" id="streakNote">Complete 3+ quests to bank today as a streak day.</div>
+    </div>
+
+    <div class="eyebrow">The chain — don't break it</div>
+    <div class="card">
+      <div id="calWrap"></div>
+    </div>
+  </section>
+
+  <!-- ═══ PROGRESS ═══ -->
+  <section id="tab-progress" hidden>
+    <div class="eyebrow">The run</div>
+    <div class="stat-row">
+      <div class="stat"><b id="stCur">—</b><span>current kg</span></div>
+      <div class="stat"><b class="down" id="stLost">0.0</b><span>kg lost</span></div>
+      <div class="stat"><b id="stTogo">—</b><span>kg to go</span></div>
+    </div>
+
+    <div class="eyebrow">Weight — the only graph that matters</div>
+    <div class="card">
+      <div class="chart-wrap" id="chartWrap"></div>
+    </div>
+
+    <div class="eyebrow">Boss ladder</div>
+    <div class="card" id="bossList"></div>
+  </section>
+
+  <!-- ═══ AWARDS ═══ -->
+  <section id="tab-awards" hidden>
+    <div class="eyebrow" id="achCount">Achievements</div>
+    <div class="ach-grid" id="achGrid"></div>
+  </section>
+
+  <!-- ═══ PLAN ═══ -->
+  <section id="tab-plan" hidden>
+    <div class="eyebrow">The 6 diet rules</div>
+    <div class="card plan">
+      <ol style="margin:0; padding-left:18px">
+        <li><b>One plate, no seconds.</b></li>
+        <li><b>Protein every meal</b> — egg / dal / curd, no exceptions. Ask for extra boiled eggs.</li>
+        <li><b>Fried = weekend boss</b>, once a week max. Poori, vada, murukku, appalam, fried rice.</li>
+        <li><b>Rice measured</b> — ~200g per meal (one ladle and a half).</li>
+        <li><b>Water before meals</b>, 3L a day. Buttermilk over juice.</li>
+        <li><b>Sugar off</b> in tea &amp; coffee.</li>
+      </ol>
+    </div>
+
+    <div class="eyebrow">Reading the canteen menu</div>
+    <div class="card plan">
+      <table>
+        <tr><th class="ok">Default picks</th><th class="no">Skip</th></tr>
+        <tr><td>Boiled egg, omelette, dal, sambar, rasam, poriyal, buttermilk, curd, sweet potato, banana</td>
+            <td>Poori, vada, bajji, butter murukku, appalam, fried rice, payasam, sweets, juice</td></tr>
+        <tr><td colspan="2">⚖️ Portion-watch: rice items 200g · idli ×3 · dosa ×2 · chapathi ×2 · pongal &amp; coconut chutney small</td></tr>
+      </table>
+      <p style="margin:10px 0 0"><b>Day shape:</b> tiffin + 2 eggs → measured lunch + buttermilk → 4pm sweet potato/fruit → 7pm light dinner + egg + curd → whey at night. ≈ 1,800–2,000 kcal.</p>
+    </div>
+
+    <div class="eyebrow">Gym — the week</div>
+    <div class="card plan">
+      <h3>Phase 0 · Weeks 1–2 — just show up</h3>
+      <p>Mon / Wed / Sat, 40 min: 10-min walk → 5 machines × 2 easy sets × 12 → 10-min incline walk. Leave feeling fresh. Attendance is the only score.</p>
+      <h3>Phase 1 · Weeks 3–8 — build the base</h3>
+      <p>3 days full body: leg press, chest press, lat pulldown, seated row, leg curl — 3×12 · plank 3×30s · finish 20-min incline walk. +2.5kg when 12 reps get easy. Off days: 8k steps.</p>
+      <h3>Phase 2 · Months 3–6 — the grind</h3>
+      <p>4 days upper/lower split + 25-min cardio · 10k steps daily.</p>
+      <p style="color:var(--danger)"><b>Hard rule:</b> no running or jumping until ~120kg. Walk, incline, cycle, row — protect the knees.</p>
+      <p><b>The 10-minute rule:</b> on lazy days, go do only 10 treadmill minutes. You're allowed to leave after. You won't.</p>
+    </div>
+
+    <div class="eyebrow">Settings &amp; data</div>
+    <div class="card plan">
+      <div class="settings-row">
+        <label>Start kg <input id="setStart" type="number" step="0.1" min="40" max="300"></label>
+        <label>Goal kg <input id="setGoal" type="number" step="0.1" min="40" max="300"></label>
+        <button class="btn ghost" id="saveSettings">Save</button>
+      </div>
+      <div class="settings-row">
+        <button class="btn ghost" id="exportBtn">Export data</button>
+        <button class="btn ghost" id="importBtn">Import</button>
+        <button class="btn danger" id="resetBtn">Reset run</button>
+      </div>
+      <p style="color:var(--faint); font-size:12px; margin-bottom:0">Data lives in this browser only — export a backup now and then. Open this page in Chrome → menu → <b>Add to Home screen</b> to install it like an app.</p>
+    </div>
+  </section>
+</div>
+
+<nav class="tabbar" aria-label="Sections">
+  <div class="tabs">
+    <button class="tab-btn on" data-tab="today"><span class="t-ico">⚔️</span><span class="t-lbl">Today</span></button>
+    <button class="tab-btn" data-tab="progress"><span class="t-ico">📈</span><span class="t-lbl">Progress</span></button>
+    <button class="tab-btn" data-tab="awards"><span class="t-ico">🏆</span><span class="t-lbl">Awards</span></button>
+    <button class="tab-btn" data-tab="plan"><span class="t-ico">📜</span><span class="t-lbl">Plan</span></button>
+  </div>
+</nav>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ── Config ─────────────────────────────────────────────────────────── */
+  const STORE_KEY = "questlog-150-90-v1";
+
+  const QUESTS = [
+    { id: "gym",     icon: "🏋️", name: "Gym session",          desc: "Show up. 40 minutes counts.",              xp: 30 },
+    { id: "steps",   icon: "👟", name: "8,000 steps",           desc: "Pace calls, basement loops, evening walk.", xp: 20 },
+    { id: "protein", icon: "🥚", name: "Protein every meal",    desc: "Egg / dal / curd at all three meals.",      xp: 15 },
+    { id: "nofried", icon: "🛡️", name: "Dodged the fried stuff", desc: "No poori, vada, murukku, appalam.",        xp: 15 },
+    { id: "water",   icon: "💧", name: "3L of water",           desc: "Buttermilk counts. Juice doesn't.",         xp: 10 },
+    { id: "sleep",   icon: "😴", name: "In bed by 11:30",       desc: "Sleep is a fat-loss stat, not a luxury.",   xp: 10 },
+  ];
+  const WEIGH_XP = 25;
+  const STREAK_MIN = 3; // quests/day to bank a streak day
+
+  const RANKS = ["Rookie", "Grinder", "Challenger", "Contender", "Warrior",
+                 "Elite", "Veteran", "Champion", "Boss Slayer", "Legend"];
+  const RARITY_XP = { common: 50, rare: 100, epic: 200, legendary: 400 };
+
+  const BOSSES = [
+    { w: 140, name: "The Gatekeeper",        tip: "Mostly water weight — strike fast." },
+    { w: 130, name: "The Couch Demon",       tip: "Weak against 8k daily steps." },
+    { w: 120, name: "The Midnight Snacker",  tip: "Dies to 7pm dinners." },
+    { w: 110, name: "The Plateau Golem",     tip: "Slow fight. Trust the process." },
+    { w: 100, name: "The Century Titan",     tip: "Break into double digits." },
+    { w: 90,  name: "KALYANAM — Final Boss", tip: "Wedding ready. GG." },
+  ];
+
+  const ACHIEVEMENTS = [
+    { id: "scale",     r: "common",    icon: "⚖️", name: "Face the Scale",        desc: "Log your first weigh-in",                     chk: (s, t) => s.weights.length >= 1 },
+    { id: "firstblood",r: "common",    icon: "🗡️", name: "First Blood",           desc: "First gym session logged",                    chk: (s, t) => t.count.gym >= 1 },
+    { id: "cleanday",  r: "common",    icon: "✨", name: "Perfect Day",           desc: "All 6 quests in a single day",                chk: (s, t) => t.perfectDays >= 1 },
+    { id: "streak3",   r: "common",    icon: "🔥", name: "Warming Up",            desc: "3-day streak",                                chk: (s, t) => t.bestStreak >= 3 },
+    { id: "streak7",   r: "rare",      icon: "🔥", name: "Week Warrior",          desc: "7-day streak",                                chk: (s, t) => t.bestStreak >= 7 },
+    { id: "streak15",  r: "epic",      icon: "🏅", name: "NEW HIGH SCORE",        desc: "15-day streak — your old record was 2 weeks", chk: (s, t) => t.bestStreak >= 15 },
+    { id: "streak30",  r: "epic",      icon: "🌊", name: "Marathon Month",        desc: "30-day streak",                               chk: (s, t) => t.bestStreak >= 30 },
+    { id: "streak60",  r: "legendary", icon: "💎", name: "Diamond Discipline",    desc: "60-day streak",                               chk: (s, t) => t.bestStreak >= 60 },
+    { id: "gym10",     r: "rare",      icon: "🎫", name: "Membership Justified",  desc: "10 gym sessions",                             chk: (s, t) => t.count.gym >= 10 },
+    { id: "gym50",     r: "epic",      icon: "🐀", name: "Gym Rat",               desc: "50 gym sessions",                             chk: (s, t) => t.count.gym >= 50 },
+    { id: "gym100",    r: "legendary", icon: "💯", name: "Century Club",          desc: "100 gym sessions",                            chk: (s, t) => t.count.gym >= 100 },
+    { id: "fried10",   r: "rare",      icon: "🛡️", name: "Murukku Slayer",        desc: "10 fried-free days",                          chk: (s, t) => t.count.nofried >= 10 },
+    { id: "fried30",   r: "epic",      icon: "⚔️", name: "Deep-Fry Nemesis",      desc: "30 fried-free days",                          chk: (s, t) => t.count.nofried >= 30 },
+    { id: "water20",   r: "rare",      icon: "💧", name: "Hydration Hero",        desc: "20 days of 3L water",                         chk: (s, t) => t.count.water >= 20 },
+    { id: "steps20",   r: "rare",      icon: "👟", name: "Path Walker",           desc: "20 days of 8k steps",                         chk: (s, t) => t.count.steps >= 20 },
+    { id: "b140",      r: "rare",      icon: "👊", name: "Gatekeeper Down",       desc: "Dropped below 140 kg",                        chk: (s, t) => t.minW < 140 },
+    { id: "b130",      r: "rare",      icon: "🛋️", name: "Couch Demon Slain",     desc: "Below 130 kg",                                chk: (s, t) => t.minW < 130 },
+    { id: "b120",      r: "epic",      icon: "🌙", name: "Snacker Banished",      desc: "Below 120 kg",                                chk: (s, t) => t.minW < 120 },
+    { id: "b110",      r: "epic",      icon: "🗿", name: "Golem Broken",          desc: "Below 110 kg",                                chk: (s, t) => t.minW < 110 },
+    { id: "b100",      r: "epic",      icon: "⚡", name: "Double Digits",         desc: "Below 100 kg",                                chk: (s, t) => t.minW < 100 },
+    { id: "b90",       r: "legendary", icon: "👑", name: "GG — Final Boss Down",  desc: "90 kg. Kalyanam ready.",                      chk: (s, t) => t.minW <= 90 },
+    { id: "lost10",    r: "rare",      icon: "📉", name: "-10 Club",              desc: "10 kg lost from start",                       chk: (s, t) => t.lost >= 10 },
+    { id: "lost30",    r: "epic",      icon: "🚀", name: "Halfway Hero",          desc: "30 kg lost — halfway there",                  chk: (s, t) => t.lost >= 30 },
+  ];
+
+  /* ── State ──────────────────────────────────────────────────────────── */
+  const todayKey = () => {
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  };
+
+  const defaultState = () => ({
+    startWeight: 150, goalWeight: 90, startDate: todayKey(),
+    weights: [],           // [{ d: 'YYYY-MM-DD', kg: number }]
+    days: {},              // { 'YYYY-MM-DD': { q: {questId: true}, weighed: bool } }
+    ach: {},               // { achId: 'YYYY-MM-DD' }
+  });
+
+  // Coerce untrusted input (storage / imported backups) into a safe shape:
+  // only validated numbers and date keys survive, since some feed innerHTML/SVG.
+  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const num = (v, lo, hi, fallback) => {
+    const n = typeof v === "number" ? v : parseFloat(v);
+    return Number.isFinite(n) && n >= lo && n <= hi ? Math.round(n * 10) / 10 : fallback;
+  };
+  const sanitizeState = (parsed) => {
+    const d = defaultState();
+    if (!parsed || typeof parsed !== "object") return d;
+    const start = num(parsed.startWeight, 40, 300, d.startWeight);
+    return {
+      startWeight: start,
+      goalWeight: Math.min(num(parsed.goalWeight, 40, 300, d.goalWeight), start - 0.1),
+      startDate: DATE_RE.test(parsed.startDate) ? parsed.startDate : d.startDate,
+      weights: Array.isArray(parsed.weights)
+        ? parsed.weights
+            .filter(w => w && DATE_RE.test(w.d))
+            .map(w => ({ d: w.d, kg: num(w.kg, 40, 300, null) }))
+            .filter(w => w.kg !== null)
+        : [],
+      days: parsed.days && typeof parsed.days === "object" ? parsed.days : {},
+      ach: parsed.ach && typeof parsed.ach === "object" ? parsed.ach : {},
+    };
+  };
+
+  const loadState = () => {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return defaultState();
+      return sanitizeState(JSON.parse(raw));
+    } catch (e) {
+      console.error("State load failed, starting fresh:", e);
+      return defaultState();
+    }
+  };
+
+  let state = loadState();
+  const save = () => {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (e) { showToast("⚠️ Save failed", "Storage unavailable — export your data."); }
+  };
+
+  /* ── Derived stats ──────────────────────────────────────────────────── */
+  const dayQuestCount = (day) => day && day.q ? QUESTS.filter(q => day.q[q.id]).length : 0;
+  const qualifies = (day) => dayQuestCount(day) >= STREAK_MIN;
+  const prevKey = (key) => {
+    const [y, m, d] = key.split("-").map(Number);
+    const dt = new Date(y, m - 1, d - 1);
+    return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+  };
+
+  const computeStats = (s) => {
+    const count = {};
+    let perfectDays = 0;
+    for (const q of QUESTS) count[q.id] = 0;
+    for (const day of Object.values(s.days)) {
+      if (!day.q) continue;
+      let n = 0;
+      for (const q of QUESTS) if (day.q[q.id]) { count[q.id] += 1; n += 1; }
+      if (n === QUESTS.length) perfectDays += 1;
+    }
+    // current streak: walk back from today (today optional if not yet banked)
+    let cur = 0, k = todayKey();
+    if (qualifies(s.days[k])) { cur = 1; k = prevKey(k); }
+    else { k = prevKey(k); }
+    while (qualifies(s.days[k])) { cur += 1; k = prevKey(k); }
+    // best streak: walk the full span once
+    let best = cur;
+    const keys = Object.keys(s.days).filter(d => qualifies(s.days[d])).sort();
+    let run = 0, prev = null;
+    for (const d of keys) {
+      run = (prev !== null && prevKey(d) === prev) ? run + 1 : 1;
+      if (run > best) best = run;
+      prev = d;
+    }
+    const weights = [...s.weights].sort((a, b) => a.d < b.d ? -1 : 1);
+    const minW = weights.length ? Math.min(...weights.map(w => w.kg)) : s.startWeight;
+    const curW = weights.length ? weights[weights.length - 1].kg : null;
+    const lost = Math.max(0, s.startWeight - minW);
+    let xp = 0;
+    for (const day of Object.values(s.days)) {
+      if (day.q) for (const q of QUESTS) if (day.q[q.id]) xp += q.xp;
+      if (day.weighed) xp += WEIGH_XP;
+    }
+    for (const id of Object.keys(s.ach)) {
+      const a = ACHIEVEMENTS.find(x => x.id === id);
+      if (a) xp += RARITY_XP[a.r];
+    }
+    return { count, perfectDays, curStreak: cur, bestStreak: best, weights, minW, curW, lost, xp };
+  };
+
+  const levelInfo = (xp) => {
+    const thr = (k) => 50 * k * (k + 1); // cumulative XP to reach level k+1
+    let k = 0;
+    while (xp >= thr(k + 1)) k += 1;
+    return {
+      level: k + 1,
+      rank: RANKS[Math.min(k, RANKS.length - 1)],
+      into: xp - thr(k),
+      span: thr(k + 1) - thr(k),
+    };
+  };
+
+  /* ── Achievements engine ────────────────────────────────────────────── */
+  const checkAchievements = () => {
+    const t = computeStats(state);
+    const fresh = ACHIEVEMENTS.filter(a => !state.ach[a.id] && a.chk(state, t));
+    if (!fresh.length) return;
+    const stamped = { ...state.ach };
+    for (const a of fresh) stamped[a.id] = todayKey();
+    state = { ...state, ach: stamped };
+    save();
+    render(); // reflect unlocks + bonus XP immediately (safe: render never mutates)
+    fresh.forEach((a, i) => setTimeout(() =>
+      showToast(a.icon + " Achievement unlocked — " + a.name, a.desc + "  ·  +" + RARITY_XP[a.r] + " XP"), i * 2200));
+  };
+
+  /* ── Toast ──────────────────────────────────────────────────────────── */
+  const toastEl = document.getElementById("toast");
+  let toastTimer = null;
+  const showToast = (title, sub) => {
+    toastEl.innerHTML = "<b></b><small></small>";
+    toastEl.querySelector("b").textContent = title;
+    toastEl.querySelector("small").textContent = sub || "";
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2000);
+  };
+
+  /* ── Rendering ──────────────────────────────────────────────────────── */
+  const $ = (id) => document.getElementById(id);
+
+  const renderHud = (t) => {
+    const li = levelInfo(t.xp);
+    $("lvlBadge").textContent = li.level;
+    $("rankName").textContent = li.rank + " · Lv " + li.level;
+    $("xpNum").textContent = li.into + " / " + li.span + " XP";
+    $("xpFill").style.width = Math.min(100, (li.into / li.span) * 100) + "%";
+    $("streakNum").textContent = t.curStreak;
+  };
+
+  const renderToday = (t) => {
+    const key = todayKey();
+    const day = state.days[key] || { q: {} };
+    const startD = new Date(state.startDate + "T00:00");
+    const dayNo = Math.max(1, Math.round((new Date(key + "T00:00") - startD) / 86400000) + 1);
+    $("dateLine").textContent = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short" }) + " · Day " + dayNo + " of the run";
+
+    $("curWeight").textContent = t.curW !== null ? t.curW.toFixed(1) : state.startWeight.toFixed(1);
+    const weighedToday = !!day.weighed;
+    $("weighForm").style.display = weighedToday ? "none" : "flex";
+    $("weighDone").hidden = !weighedToday;
+
+    // nudge: first weigh-in, or >7 days stale
+    const nudge = $("nudgeCard");
+    if (!state.weights.length) {
+      nudge.hidden = false;
+      nudge.innerHTML = "<b>⚖️ Quest available: Face the Scale</b><p>Log your first weigh-in above. Every run starts with knowing the starting point — the number is data, not judgement.</p>";
+    } else {
+      const last = t.weights[t.weights.length - 1].d;
+      const staleDays = Math.round((new Date(key + "T00:00") - new Date(last + "T00:00")) / 86400000);
+      if (staleDays >= 7 && !weighedToday) {
+        nudge.hidden = false;
+        nudge.innerHTML = "<b>⚖️ Weekly weigh-in due</b><p>Last logged " + staleDays + " days ago. Morning, after toilet, before food.</p>";
+      } else nudge.hidden = true;
+    }
+
+    const list = $("questList");
+    list.innerHTML = "";
+    for (const q of QUESTS) {
+      const done = !!(day.q && day.q[q.id]);
+      const btn = document.createElement("button");
+      btn.className = "quest" + (done ? " done" : "");
+      btn.setAttribute("aria-pressed", String(done));
+      btn.innerHTML =
+        '<span class="q-icon"></span><span class="q-body"><span class="q-name"></span>' +
+        '<div class="q-desc"></div></span><span class="q-xp"></span><span class="q-check">✓</span>';
+      btn.querySelector(".q-icon").textContent = q.icon;
+      btn.querySelector(".q-name").textContent = q.name;
+      btn.querySelector(".q-desc").textContent = q.desc;
+      btn.querySelector(".q-xp").textContent = (done ? "+" : "") + q.xp + " XP";
+      btn.addEventListener("click", () => toggleQuest(q.id));
+      list.appendChild(btn);
+    }
+
+    const n = dayQuestCount(day);
+    $("dayFill").style.width = (n / QUESTS.length) * 100 + "%";
+    $("dayLabel").textContent = n + " / " + QUESTS.length;
+    const note = $("streakNote");
+    if (n >= STREAK_MIN) { note.textContent = "🔥 Streak day banked. See you tomorrow."; note.className = "streak-note safe"; }
+    else { note.textContent = "Complete " + (STREAK_MIN - n) + " more quest" + (STREAK_MIN - n > 1 ? "s" : "") + " to bank today as a streak day."; note.className = "streak-note"; }
+
+    renderCalendar(t);
+  };
+
+  let calView = null; // { y, m } — month being browsed; not persisted
+
+  const renderCalendar = (t) => {
+    const wrap = $("calWrap");
+    const now = new Date();
+    if (!calView) calView = { y: now.getFullYear(), m: now.getMonth() };
+    const { y, m } = calView;
+    const firstDow = new Date(y, m, 1).getDay(); // 0 = Sunday
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+    const tk = todayKey();
+    const pad = (n) => String(n).padStart(2, "0");
+
+    let cells = ["S", "M", "T", "W", "T", "F", "S"].map(d => '<div class="cal-dow">' + d + '</div>').join("");
+    for (let i = 0; i < firstDow; i++) cells += '<div class="cal-day out"></div>';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = y + "-" + pad(m + 1) + "-" + pad(d);
+      const day = state.days[key];
+      const n = dayQuestCount(day);
+      let cls = "cal-day";
+      if (key > tk) cls += " future";
+      else if (key < state.startDate) cls += " pre";
+      else if (n === QUESTS.length) cls += " perfect";
+      else if (n >= STREAK_MIN) cls += " bank";
+      else if (n > 0) cls += " part";
+      if (key === tk) cls += " today";
+      const wdot = day && day.weighed ? '<span class="w-dot"></span>' : "";
+      const label = key + ": " + n + " of " + QUESTS.length + " quests";
+      cells += '<div class="' + cls + '" role="img" aria-label="' + label + '">' + d + wdot + "</div>";
+    }
+
+    const monthLabel = new Date(y, m, 1).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+    wrap.innerHTML =
+      '<div class="cal-head"><div><div class="cal-title">' + monthLabel + "</div>" +
+      '<div class="cal-sub">🔥 current ' + t.curStreak + " · best " + t.bestStreak + "</div></div>" +
+      '<div class="cal-nav"><button id="calPrev" aria-label="Previous month">‹</button>' +
+      '<button id="calNext" aria-label="Next month">›</button></div></div>' +
+      '<div class="cal-grid">' + cells + "</div>" +
+      '<div class="cal-legend">' +
+      '<span><span class="k" style="background:rgba(83,205,140,0.5)"></span>streak day (3+)</span>' +
+      '<span><span class="k" style="background:var(--gold)"></span>perfect (6/6)</span>' +
+      '<span><span class="k" style="border:1px solid rgba(83,205,140,0.6)"></span>partial</span>' +
+      '<span><span class="k" style="background:var(--blue);width:6px;height:6px;border-radius:50%"></span>weigh-in</span>' +
+      "</div>";
+
+    $("calPrev").addEventListener("click", () => {
+      calView = m === 0 ? { y: y - 1, m: 11 } : { y, m: m - 1 };
+      renderCalendar(computeStats(state));
+    });
+    const atCurrent = y === now.getFullYear() && m === now.getMonth();
+    $("calNext").disabled = atCurrent;
+    if (!atCurrent) $("calNext").addEventListener("click", () => {
+      calView = m === 11 ? { y: y + 1, m: 0 } : { y, m: m + 1 };
+      renderCalendar(computeStats(state));
+    });
+  };
+
+  const renderProgress = (t) => {
+    $("stCur").textContent = t.curW !== null ? t.curW.toFixed(1) : "—";
+    $("stLost").textContent = t.lost.toFixed(1);
+    $("stTogo").textContent = t.curW !== null ? Math.max(0, t.curW - state.goalWeight).toFixed(1) : (state.startWeight - state.goalWeight).toFixed(1);
+    renderChart(t);
+    renderBosses(t);
+  };
+
+  const renderChart = (t) => {
+    const wrap = $("chartWrap");
+    const pts = t.weights;
+    if (pts.length < 1) {
+      wrap.innerHTML = '<div class="chart-empty">No weigh-ins yet. The line starts when you do.</div>';
+      return;
+    }
+    const W = 360, H = 210, padL = 34, padR = 12, padT = 14, padB = 24;
+    const kgs = pts.map(p => p.kg);
+    const lo = Math.min(state.goalWeight - 2, Math.min(...kgs) - 2);
+    const hi = Math.max(state.startWeight + 2, Math.max(...kgs) + 2);
+    const t0 = new Date(pts[0].d + "T00:00").getTime();
+    const t1 = new Date(pts[pts.length - 1].d + "T00:00").getTime();
+    const span = Math.max(t1 - t0, 86400000 * 7); // min one week of x-axis
+    const X = (d) => padL + ((new Date(d + "T00:00").getTime() - t0) / span) * (W - padL - padR);
+    const Y = (kg) => padT + (1 - (kg - lo) / (hi - lo)) * (H - padT - padB);
+
+    let g = "";
+    // faint gridlines every 10kg + labels
+    for (let kg = Math.ceil(lo / 10) * 10; kg <= hi; kg += 10) {
+      const y = Y(kg);
+      g += '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="rgba(150,162,186,0.12)" stroke-width="1"/>';
+      g += '<text x="' + (padL - 6) + '" y="' + (y + 3.5) + '" text-anchor="end" font-size="9.5" fill="#6b7590" font-family="ui-monospace,monospace">' + kg + '</text>';
+    }
+    // goal line
+    const gy = Y(state.goalWeight);
+    g += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#f2b63c" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.8"/>';
+    g += '<text x="' + (W - padR) + '" y="' + (gy - 5) + '" text-anchor="end" font-size="9.5" fill="#f2b63c" font-family="ui-monospace,monospace">GOAL ' + state.goalWeight + '</text>';
+    // line + area
+    const path = pts.map((p, i) => (i ? "L" : "M") + X(p.d).toFixed(1) + " " + Y(p.kg).toFixed(1)).join(" ");
+    if (pts.length > 1) {
+      g += '<path d="' + path + " L" + X(pts[pts.length - 1].d).toFixed(1) + " " + (H - padB) + " L" + X(pts[0].d).toFixed(1) + " " + (H - padB) + ' Z" fill="rgba(100,168,239,0.09)"/>';
+      g += '<path d="' + path + '" fill="none" stroke="#64a8ef" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    }
+    // points (last emphasized), plus generous invisible hit targets
+    pts.forEach((p, i) => {
+      const last = i === pts.length - 1;
+      const x = X(p.d).toFixed(1), y = Y(p.kg).toFixed(1);
+      if (last) g += '<circle cx="' + x + '" cy="' + y + '" r="7" fill="none" stroke="#64a8ef" stroke-width="1.5" opacity="0.6"/>';
+      g += '<circle cx="' + x + '" cy="' + y + '" r="' + (last ? 4.5 : 3.5) + '" fill="#64a8ef" stroke="#1a2130" stroke-width="2"/>';
+      g += '<circle cx="' + x + '" cy="' + y + '" r="14" fill="transparent" data-i="' + i + '" style="cursor:pointer"/>';
+    });
+    // x labels: first + last date
+    const fmt = (d) => new Date(d + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    g += '<text x="' + padL + '" y="' + (H - 7) + '" font-size="9.5" fill="#6b7590" font-family="ui-monospace,monospace">' + fmt(pts[0].d) + '</text>';
+    if (pts.length > 1) g += '<text x="' + (W - padR) + '" y="' + (H - 7) + '" text-anchor="end" font-size="9.5" fill="#6b7590" font-family="ui-monospace,monospace">' + fmt(pts[pts.length - 1].d) + '</text>';
+
+    wrap.innerHTML = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Weight over time, in kilograms">' + g + '</svg><div class="chart-tip" id="chartTip"></div>';
+
+    const tip = $("chartTip");
+    wrap.querySelector("svg").addEventListener("click", (e) => {
+      const idx = e.target.getAttribute && e.target.getAttribute("data-i");
+      if (idx === null || idx === undefined) { tip.style.display = "none"; return; }
+      const p = pts[Number(idx)];
+      tip.textContent = fmt(p.d) + " · " + p.kg.toFixed(1) + " kg";
+      const svgRect = wrap.getBoundingClientRect();
+      tip.style.left = ((X(p.d) / W) * svgRect.width) + "px";
+      tip.style.top = ((Y(p.kg) / H) * svgRect.height) + "px";
+      tip.style.display = "block";
+    });
+  };
+
+  const renderBosses = (t) => {
+    const list = $("bossList");
+    list.innerHTML = "";
+    let activeAssigned = false;
+    for (const b of BOSSES) {
+      const dead = b.w === 90 ? t.minW <= b.w : t.minW < b.w;
+      let cls = "locked", stateTxt = "LOCKED";
+      if (dead) { cls = "dead"; stateTxt = "DEFEATED"; }
+      else if (!activeAssigned) { cls = "active"; stateTxt = "IN FIGHT"; activeAssigned = true; }
+      const row = document.createElement("div");
+      row.className = "boss " + cls;
+      row.innerHTML = '<span class="b-w"></span><span><div class="b-name"></div><div class="b-tip"></div></span><span class="b-state"></span>';
+      row.querySelector(".b-w").textContent = b.w;
+      row.querySelector(".b-name").textContent = b.name;
+      row.querySelector(".b-tip").textContent = b.tip;
+      row.querySelector(".b-state").textContent = stateTxt;
+      list.appendChild(row);
+    }
+  };
+
+  const renderAwards = () => {
+    const grid = $("achGrid");
+    grid.innerHTML = "";
+    const unlocked = Object.keys(state.ach).length;
+    $("achCount").textContent = "Achievements · " + unlocked + " / " + ACHIEVEMENTS.length;
+    const sorted = [...ACHIEVEMENTS].sort((a, b) => (state.ach[b.id] ? 1 : 0) - (state.ach[a.id] ? 1 : 0));
+    for (const a of sorted) {
+      const got = state.ach[a.id];
+      const el = document.createElement("div");
+      el.className = "ach r-" + a.r + (got ? "" : " locked");
+      el.innerHTML = '<div class="a-icon"></div><div class="a-name"></div><div class="a-desc"></div><div class="a-meta"></div>';
+      el.querySelector(".a-icon").textContent = got ? a.icon : "🔒";
+      el.querySelector(".a-name").textContent = a.name;
+      el.querySelector(".a-desc").textContent = a.desc;
+      el.querySelector(".a-meta").textContent = a.r + " · " + RARITY_XP[a.r] + " xp" + (got ? " · " + got : "");
+      grid.appendChild(el);
+    }
+  };
+
+  const render = () => {
+    const t = computeStats(state);
+    renderHud(t);
+    renderToday(t);
+    renderProgress(t);
+    renderAwards();
+    $("setStart").value = state.startWeight;
+    $("setGoal").value = state.goalWeight;
+  };
+
+  /* ── Actions ────────────────────────────────────────────────────────── */
+  const updateDay = (key, patch) => {
+    const day = state.days[key] || { q: {} };
+    state = { ...state, days: { ...state.days, [key]: { ...day, ...patch } } };
+  };
+
+  const toggleQuest = (id) => {
+    const key = todayKey();
+    const day = state.days[key] || { q: {} };
+    const q = { ...day.q, [id]: !day.q[id] };
+    if (!q[id]) delete q[id];
+    updateDay(key, { q });
+    save();
+    checkAchievements();
+    render();
+  };
+
+  const logWeight = () => {
+    const val = parseFloat($("weightInput").value);
+    if (!Number.isFinite(val) || val < 40 || val > 300) {
+      showToast("⚠️ That doesn't look right", "Enter a weight between 40 and 300 kg.");
+      return;
+    }
+    const key = todayKey();
+    const kept = state.weights.filter(w => w.d !== key);
+    state = { ...state, weights: [...kept, { d: key, kg: Math.round(val * 10) / 10 }] };
+    updateDay(key, { weighed: true });
+    save();
+    $("weightInput").value = "";
+    showToast("⚖️ Weigh-in logged", "+" + WEIGH_XP + " XP · see the line move on Progress.");
+    checkAchievements();
+    render();
+  };
+
+  /* ── Wiring ─────────────────────────────────────────────────────────── */
+  $("logWeightBtn").addEventListener("click", logWeight);
+  $("weightInput").addEventListener("keydown", (e) => { if (e.key === "Enter") logWeight(); });
+
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("on", b === btn));
+      ["today", "progress", "awards", "plan"].forEach(name => {
+        document.getElementById("tab-" + name).hidden = name !== btn.dataset.tab;
+      });
+      if (btn.dataset.tab === "progress") renderChart(computeStats(state)); // re-measure after unhide
+    });
+  });
+
+  $("saveSettings").addEventListener("click", () => {
+    const sw = parseFloat($("setStart").value), gw = parseFloat($("setGoal").value);
+    if (!Number.isFinite(sw) || !Number.isFinite(gw) || sw < 40 || sw > 300 || gw < 40 || gw >= sw) {
+      showToast("⚠️ Check the numbers", "Goal must be below start; both 40–300 kg.");
+      return;
+    }
+    state = { ...state, startWeight: sw, goalWeight: gw };
+    save(); render();
+    showToast("✓ Saved", "Start " + sw + " kg → goal " + gw + " kg.");
+  });
+
+  $("exportBtn").addEventListener("click", () => {
+    const json = JSON.stringify(state);
+    const done = () => showToast("📋 Copied to clipboard", "Paste it somewhere safe (notes, chat with yourself).");
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(json).then(done, () => prompt("Copy your backup:", json));
+    else prompt("Copy your backup:", json);
+  });
+
+  $("importBtn").addEventListener("click", () => {
+    const raw = prompt("Paste your exported backup JSON:");
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || !parsed.days) throw new Error("not a QuestLog backup");
+      state = sanitizeState(parsed);
+      save(); render();
+      showToast("✓ Imported", "Run restored.");
+    } catch (e) {
+      showToast("⚠️ Import failed", "That didn't look like a QuestLog backup.");
+    }
+  });
+
+  $("resetBtn").addEventListener("click", () => {
+    if (!confirm("Reset the entire run? All XP, streaks, weights and achievements will be wiped. Export first if unsure.")) return;
+    state = defaultState();
+    save(); render();
+    showToast("↺ Fresh run started", "Day 1. Let's go.");
+  });
+
+  render();
+  checkAchievements();
+})();
+</script>

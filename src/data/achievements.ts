@@ -1,0 +1,27 @@
+import type { AchievementDef } from '../state/types'
+
+export const ACHIEVEMENTS: AchievementDef[] = [
+  { id: 'scale', r: 'common', icon: '⚖️', name: 'Face the Scale', desc: 'Log your first weigh-in', chk: (s) => s.weights.length >= 1 },
+  { id: 'firstblood', r: 'common', icon: '🗡️', name: 'First Blood', desc: 'First gym session logged', chk: (_s, t) => t.count.gym >= 1 },
+  { id: 'cleanday', r: 'common', icon: '✨', name: 'Perfect Day', desc: 'All 6 quests in a single day', chk: (_s, t) => t.perfectDays >= 1 },
+  { id: 'streak3', r: 'common', icon: '🔥', name: 'Warming Up', desc: '3-day streak', chk: (_s, t) => t.bestStreak >= 3 },
+  { id: 'streak7', r: 'rare', icon: '🔥', name: 'Week Warrior', desc: '7-day streak', chk: (_s, t) => t.bestStreak >= 7 },
+  { id: 'streak15', r: 'epic', icon: '🏅', name: 'NEW HIGH SCORE', desc: '15-day streak — your old record was 2 weeks', chk: (_s, t) => t.bestStreak >= 15 },
+  { id: 'streak30', r: 'epic', icon: '🌊', name: 'Marathon Month', desc: '30-day streak', chk: (_s, t) => t.bestStreak >= 30 },
+  { id: 'streak60', r: 'legendary', icon: '💎', name: 'Diamond Discipline', desc: '60-day streak', chk: (_s, t) => t.bestStreak >= 60 },
+  { id: 'gym10', r: 'rare', icon: '🎫', name: 'Membership Justified', desc: '10 gym sessions', chk: (_s, t) => t.count.gym >= 10 },
+  { id: 'gym50', r: 'epic', icon: '🐀', name: 'Gym Rat', desc: '50 gym sessions', chk: (_s, t) => t.count.gym >= 50 },
+  { id: 'gym100', r: 'legendary', icon: '💯', name: 'Century Club', desc: '100 gym sessions', chk: (_s, t) => t.count.gym >= 100 },
+  { id: 'fried10', r: 'rare', icon: '🛡️', name: 'Murukku Slayer', desc: '10 fried-free days', chk: (_s, t) => t.count.nofried >= 10 },
+  { id: 'fried30', r: 'epic', icon: '⚔️', name: 'Deep-Fry Nemesis', desc: '30 fried-free days', chk: (_s, t) => t.count.nofried >= 30 },
+  { id: 'water20', r: 'rare', icon: '💧', name: 'Hydration Hero', desc: '20 days of 3L water', chk: (_s, t) => t.count.water >= 20 },
+  { id: 'steps20', r: 'rare', icon: '👟', name: 'Path Walker', desc: '20 days of 8k steps', chk: (_s, t) => t.count.steps >= 20 },
+  { id: 'b140', r: 'rare', icon: '👊', name: 'Gatekeeper Down', desc: 'Dropped below 140 kg', chk: (_s, t) => t.minW < 140 },
+  { id: 'b130', r: 'rare', icon: '🛋️', name: 'Couch Demon Slain', desc: 'Below 130 kg', chk: (_s, t) => t.minW < 130 },
+  { id: 'b120', r: 'epic', icon: '🌙', name: 'Snacker Banished', desc: 'Below 120 kg', chk: (_s, t) => t.minW < 120 },
+  { id: 'b110', r: 'epic', icon: '🗿', name: 'Golem Broken', desc: 'Below 110 kg', chk: (_s, t) => t.minW < 110 },
+  { id: 'b100', r: 'epic', icon: '⚡', name: 'Double Digits', desc: 'Below 100 kg', chk: (_s, t) => t.minW < 100 },
+  { id: 'b90', r: 'legendary', icon: '👑', name: 'GG — Final Boss Down', desc: '90 kg. Kalyanam ready.', chk: (_s, t) => t.minW <= 90 },
+  { id: 'lost10', r: 'rare', icon: '📉', name: '-10 Club', desc: '10 kg lost from start', chk: (_s, t) => t.lost >= 10 },
+  { id: 'lost30', r: 'epic', icon: '🚀', name: 'Halfway Hero', desc: '30 kg lost — halfway there', chk: (_s, t) => t.lost >= 30 },
+]
