@@ -463,6 +463,45 @@ input[type="number"], input[type="email"], input[type="password"] {
 .rh-cell.done { background: rgba(77, 227, 255, 0.35); border-color: rgba(77, 227, 255, 0.55); }
 .rh-legend { font-family: var(--mono); font-size: 10px; color: var(--faint); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.06em; }
 
+/* ── Quest editing (Today) ── */
+.eyebrow-row { justify-content: space-between; }
+.eyebrow-row::after { display: none; }
+.eyebrow-action {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--cyan); background: none; border: 1px solid var(--edge); border-radius: 6px; padding: 4px 9px;
+}
+.eyebrow-action:hover { border-color: var(--cyan); box-shadow: 0 0 8px rgba(77, 227, 255, 0.15); }
+.quest-edit-list { margin-top: 8px; }
+.quest-edit {
+  background: rgba(28, 23, 50, 0.75); border: 1px solid rgba(77, 227, 255, 0.22);
+  border-radius: 10px; padding: 10px 12px; margin-top: 8px;
+}
+.qe-row1 { display: flex; align-items: center; gap: 8px; }
+.quest-edit input {
+  border: 1px solid var(--edge); background: var(--bg-deep); color: var(--ink);
+  border-radius: 8px; font-family: var(--body); font-size: 14px; padding: 8px 10px;
+}
+.qe-icon { width: 46px; flex: none; text-align: center; font-size: 18px; padding: 8px 4px; }
+.qe-name { flex: 1; min-width: 0; font-weight: 700; }
+.qe-xp { width: 56px; flex: none; font-family: var(--mono); text-align: center; }
+.qe-xp-lbl { font-family: var(--mono); font-size: 10px; color: var(--faint); text-transform: uppercase; flex: none; }
+.qe-del {
+  flex: none; width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--edge); background: var(--surface-2); color: var(--muted); font-size: 12px;
+}
+.qe-del:hover { color: var(--danger); border-color: var(--danger); }
+.qe-desc { width: 100%; margin-top: 8px; }
+
+/* ── Task edit ── */
+.task-edit {
+  flex: none; width: 28px; height: 28px; border-radius: 8px;
+  border: 1px solid var(--edge); background: var(--surface-2); color: var(--muted);
+  font-size: 12px; line-height: 1; transition: color 0.15s, border-color 0.15s;
+}
+.task-edit:hover { color: var(--cyan); border-color: var(--cyan); }
+.task-edit-form { margin-top: 6px; border-color: rgba(77, 227, 255, 0.35); }
+.task-edit-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+
 /* ── Tab bar (mobile) ── */
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;

@@ -1,10 +1,11 @@
 import { MEAL_LIMITS, MEAL_TYPES } from '../data/meals'
+import { DEFAULT_QUESTS, QUEST_LIMITS, newQuestId } from '../data/quests'
 import { TASK_KINDS, TASK_LIMITS, TASK_PERIODS } from '../data/tasks'
 import { newMealId } from './meals'
 import { newTaskId } from './tasks'
 import { DATE_RE } from './dates'
 import { defaultState } from './defaults'
-import type { MealEntry, MealType, TaskDef, TaskKind, TaskPeriod, TaskValue, TrackerState } from './types'
+import type { MealEntry, MealType, QuestDef, TaskDef, TaskKind, TaskPeriod, TaskValue, TrackerState } from './types'
 
 const num = (v: unknown, lo: number, hi: number, fallback: number): number => {
   const n = typeof v === 'number' ? v : parseFloat(String(v))
@@ -41,6 +42,36 @@ const sanitizeMeals = (parsed: unknown): TrackerState['meals'] => {
     if (!DATE_RE.test(key) || !Array.isArray(list)) continue
     const clean = list.map(sanitizeMeal).filter((m): m is MealEntry => m !== null)
     if (clean.length) out[key] = clean
+  }
+  return out
+}
+
+const sanitizeQuest = (raw: unknown): QuestDef | null => {
+  if (!isRecord(raw)) return null
+  const name = typeof raw.name === 'string' ? raw.name.trim().slice(0, QUEST_LIMITS.name.max) : ''
+  if (!name) return null
+  return {
+    id: typeof raw.id === 'string' && raw.id ? raw.id : newQuestId(),
+    icon: typeof raw.icon === 'string' && raw.icon.trim() ? raw.icon.trim().slice(0, QUEST_LIMITS.icon.max) : '⭐',
+    name,
+    desc: typeof raw.desc === 'string' ? raw.desc.trim().slice(0, QUEST_LIMITS.desc.max) : '',
+    xp: Math.round(num(raw.xp, QUEST_LIMITS.xp.min, QUEST_LIMITS.xp.max, 10)),
+  }
+}
+
+const sanitizeQuests = (parsed: unknown): QuestDef[] => {
+  // Absent field (older saves / imports) → seed the defaults. An explicit list
+  // (even after edits) is respected, deduped by id, and capped.
+  if (parsed === undefined) return DEFAULT_QUESTS.map((q) => ({ ...q }))
+  if (!Array.isArray(parsed)) return DEFAULT_QUESTS.map((q) => ({ ...q }))
+  const seen = new Set<string>()
+  const out: QuestDef[] = []
+  for (const raw of parsed) {
+    const q = sanitizeQuest(raw)
+    if (!q || seen.has(q.id)) continue
+    seen.add(q.id)
+    out.push(q)
+    if (out.length >= QUEST_LIMITS.max) break
   }
   return out
 }
@@ -117,6 +148,7 @@ export const sanitizeState = (parsed: unknown): TrackerState => {
       .map((w) => ({ d: w.d as string, kg: num(w.kg, 40, 300, NaN) }))
       .filter((w) => Number.isFinite(w.kg))
       .sort((a, b) => (a.d < b.d ? -1 : 1)),
+    quests: sanitizeQuests(parsed.quests),
     days: isRecord(parsed.days) ? (parsed.days as TrackerState['days']) : {},
     meals: sanitizeMeals(parsed.meals),
     tasks,

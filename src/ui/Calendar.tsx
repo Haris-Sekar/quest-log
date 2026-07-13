@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { KCAL_TARGET } from '../data/meals'
-import { QUESTS, STREAK_MIN } from '../data/quests'
+import { STREAK_MIN } from '../data/quests'
 import { pad2, todayKey } from '../state/dates'
 import { mealTotals } from '../state/meals'
 import { dayQuestCount } from '../state/stats'
@@ -18,12 +18,15 @@ export const Calendar = ({ state, stats }: { state: TrackerState; stats: Stats }
   const atCurrent = y === now.getFullYear() && m === now.getMonth()
   const monthLabel = new Date(y, m, 1).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
 
+  const quests = state.quests
+  const questTotal = quests.length
+  const bankMin = Math.min(STREAK_MIN, questTotal)
   const cells = []
   for (let i = 0; i < firstDow; i++) cells.push(<div key={`pad-${i}`} className="cal-day out" />)
   for (let d = 1; d <= daysInMonth; d++) {
     const key = `${y}-${pad2(m + 1)}-${pad2(d)}`
     const day = state.days[key]
-    const n = dayQuestCount(day)
+    const n = dayQuestCount(day, quests)
     const meals = mealTotals(state.meals[key])
     const kcal = Math.round(meals.kcal)
     const showKcal = meals.items > 0 && key <= tk
@@ -31,11 +34,11 @@ export const Calendar = ({ state, stats }: { state: TrackerState; stats: Stats }
     let cls = 'cal-day'
     if (key > tk) cls += ' future'
     else if (key < state.startDate) cls += ' pre'
-    else if (n === QUESTS.length) cls += ' perfect'
-    else if (n >= STREAK_MIN) cls += ' bank'
+    else if (questTotal > 0 && n === questTotal) cls += ' perfect'
+    else if (n >= bankMin && n > 0) cls += ' bank'
     else if (n > 0) cls += ' part'
     if (key === tk) cls += ' today'
-    const label = `${key}: ${n} of ${QUESTS.length} quests${showKcal ? `, ${kcal} kcal` : ''}`
+    const label = `${key}: ${n} of ${questTotal} quests${showKcal ? `, ${kcal} kcal` : ''}`
     cells.push(
       <div key={key} className={cls} role="img" aria-label={label}>
         <span className="cal-dnum">{d}</span>
