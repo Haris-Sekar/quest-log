@@ -7,5 +7,6 @@ export const defaultState = (): TrackerState => ({
   startDate: todayKey(),
   weights: [],
   days: {},
+  meals: {},
   ach: {},
 })

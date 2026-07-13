@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SignIn } from './auth/SignIn'
 import { Awards } from './pages/Awards'
+import { Meals } from './pages/Meals'
 import { Plan } from './pages/Plan'
 import { Progress } from './pages/Progress'
 import { Today } from './pages/Today'
@@ -35,6 +36,7 @@ export const App = () => {
         </header>
         <main className="shell">
           {tab === 'today' && <Today state={state} stats={stats} />}
+          {tab === 'meals' && <Meals state={state} />}
           {tab === 'progress' && <Progress state={state} stats={stats} />}
           {tab === 'awards' && <Awards state={state} />}
           {tab === 'plan' && <Plan state={state} stats={stats} />}

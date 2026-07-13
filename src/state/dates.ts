@@ -10,6 +10,11 @@ export const prevKey = (key: string): string => {
   return dateKey(new Date(y, m - 1, d - 1))
 }
 
+export const nextKey = (key: string): string => {
+  const [y, m, d] = key.split('-').map(Number)
+  return dateKey(new Date(y, m - 1, d + 1))
+}
+
 export const daysBetween = (fromKey: string, toKey: string): number =>
   Math.round(
     (new Date(`${toKey}T00:00`).getTime() - new Date(`${fromKey}T00:00`).getTime()) / 86400000,
