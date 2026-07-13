@@ -116,6 +116,7 @@ const MealForm = ({ dayKey }: { dayKey: string }) => {
           : 'Review the numbers, then add.'
       toast('🔍 Scanned', `${draft.name} · ~${est}. ${tail}`)
     } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error('Food scan failed:', err)
       const code = err instanceof Error ? err.message : ''
       if (code === 'decode-failed') toast('⚠️ Bad image', "Couldn't read that image file.")
       else if (code === 'empty-result') toast('⚠️ No food found', 'Try another photo or type it in.')
