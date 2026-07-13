@@ -6,6 +6,7 @@ import {
   persistentMultipleTabManager,
   type Firestore,
 } from 'firebase/firestore'
+import type { GenerativeModel } from 'firebase/ai'
 
 const cfg = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
@@ -46,3 +47,53 @@ export const getDb = (): Firestore => {
 }
 
 export const googleProvider = new GoogleAuthProvider()
+
+let appCheckStarted = false
+
+/** Start App Check once, if a reCAPTCHA site key is configured. In dev, set a
+ *  debug token so localhost passes without a real reCAPTCHA challenge. */
+const ensureAppCheck = async (fbApp: FirebaseApp): Promise<void> => {
+  if (appCheckStarted) return
+  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined
+  if (!siteKey) return
+  const { initializeAppCheck, ReCaptchaV3Provider } = await import('firebase/app-check')
+  if (import.meta.env.DEV) {
+    // @ts-expect-error — debug flag read by the App Check SDK at init time
+    globalThis.FIREBASE_APPCHECK_DEBUG_TOKEN = true
+  }
+  initializeAppCheck(fbApp, {
+    provider: new ReCaptchaV3Provider(siteKey),
+    isTokenAutoRefreshEnabled: true,
+  })
+  appCheckStarted = true
+}
+
+let foodModel: GenerativeModel | null = null
+
+/** The Gemini model used for food-photo estimation, via Firebase AI Logic.
+ *  Structured output: returns strict JSON matching FoodEstimate. Lazy: the AI
+ *  SDK is dynamically imported on first call so it stays out of the initial
+ *  bundle. Requires Firebase to be configured. */
+export const getFoodModel = async (): Promise<GenerativeModel> => {
+  const fbApp = ensureApp()
+  await ensureAppCheck(fbApp)
+  if (!foodModel) {
+    const { getAI, getGenerativeModel, GoogleAIBackend, Schema } = await import('firebase/ai')
+    const ai = getAI(fbApp, { backend: new GoogleAIBackend() })
+    foodModel = getGenerativeModel(ai, {
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: Schema.object({
+          properties: {
+            description: Schema.string(),
+            kcal: Schema.number(),
+            protein: Schema.number(),
+            confidence: Schema.enumString({ enum: ['low', 'medium', 'high'] }),
+          },
+        }),
+      },
+    })
+  }
+  return foodModel
+}

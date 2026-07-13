@@ -642,3 +642,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+.scan-btn {
+  width: 100%;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.scan-btn:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

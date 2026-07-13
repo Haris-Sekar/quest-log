@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { KCAL_TARGET, MEAL_LIMITS, MEAL_TYPES, PROTEIN_TARGET } from '../data/meals'
 import { nextKey, prevKey, todayKey } from '../state/dates'
 import { mealTotals, newMealId } from '../state/meals'
 import type { MealEntry, MealType, TrackerState } from '../state/types'
+import { analyzeFoodImage, toMealDraft } from '../state/vision'
 import { useStore } from '../store'
 import { useToast } from '../ui/Toast'
 
@@ -88,13 +89,41 @@ const DaySummary = ({ meals }: { meals: MealEntry[] }) => {
 const blankForm = { name: '', kcal: '', protein: '', qty: '1' }
 
 const MealForm = ({ dayKey }: { dayKey: string }) => {
-  const { update } = useStore()
+  const { update, mode, user } = useStore()
   const toast = useToast()
   const [type, setType] = useState<MealType>('breakfast')
   const [form, setForm] = useState(blankForm)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [scanning, setScanning] = useState(false)
+  const canScan = mode === 'firebase' && Boolean(user)
 
   const set = (k: keyof typeof blankForm) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }))
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-picking the same file
+    if (!file) return
+    setScanning(true)
+    try {
+      const estimate = await analyzeFoodImage(file)
+      const draft = toMealDraft(estimate)
+      setForm((f) => ({ ...f, ...draft }))
+      const est = `${Math.round(Number(draft.kcal))} kcal`
+      const tail =
+        estimate.confidence === 'low'
+          ? 'Rough guess — double-check the numbers.'
+          : 'Review the numbers, then add.'
+      toast('🔍 Scanned', `${draft.name} · ~${est}. ${tail}`)
+    } catch (err: unknown) {
+      const code = err instanceof Error ? err.message : ''
+      if (code === 'decode-failed') toast('⚠️ Bad image', "Couldn't read that image file.")
+      else if (code === 'empty-result') toast('⚠️ No food found', 'Try another photo or type it in.')
+      else toast('⚠️ Scan failed', "Couldn't reach the food AI — enter it manually.")
+    } finally {
+      setScanning(false)
+    }
+  }
 
   const add = () => {
     const name = form.name.trim()
@@ -150,6 +179,26 @@ const MealForm = ({ dayKey }: { dayKey: string }) => {
           </button>
         ))}
       </div>
+      {canScan && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            onChange={onPick}
+          />
+          <button
+            type="button"
+            className="btn scan-btn"
+            disabled={scanning}
+            onClick={() => fileRef.current?.click()}
+          >
+            {scanning ? '⏳ Analyzing…' : '📷 Scan food'}
+          </button>
+        </>
+      )}
       <input
         className="meal-name"
         type="text"
