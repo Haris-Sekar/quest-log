@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { todayKey } from '../state/dates'
 import { sanitizeState } from '../state/sanitize'
 import type { Stats, TrackerState } from '../state/types'
 import { useStore } from '../store'
@@ -52,7 +53,7 @@ const Settings = ({ state }: { state: TrackerState }) => {
     update((s) => ({
       startWeight: s.startWeight,
       goalWeight: s.goalWeight,
-      startDate: s.startDate,
+      startDate: todayKey(),
       weights: [],
       days: {},
       meals: {},
