@@ -17,4 +17,9 @@ describe('fitWithin', () => {
   it('never upscales a small image', () => {
     expect(fitWithin(200, 100, 1024)).toEqual({ w: 200, h: 100 })
   })
+
+  it('rounds scaled dimensions to integers', () => {
+    // 1000x333 capped at 500 -> scale 0.5 -> 500 x 166.5 -> rounds to 167
+    expect(fitWithin(1000, 333, 500)).toEqual({ w: 500, h: 167 })
+  })
 })

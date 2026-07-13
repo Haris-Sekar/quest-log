@@ -24,19 +24,24 @@ export const compressImage = (file: File): Promise<InlineImage> =>
     const img = new Image()
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const { w, h } = fitWithin(img.naturalWidth, img.naturalHeight, MAX_EDGE)
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')
-      if (!ctx) {
+      try {
+        const { w, h } = fitWithin(img.naturalWidth, img.naturalHeight, MAX_EDGE)
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('decode-failed'))
+          return
+        }
+        ctx.drawImage(img, 0, 0, w, h)
+        const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
+        const base64 = dataUrl.split(',')[1]
+        if (!base64) throw new Error('decode-failed')
+        resolve({ base64, mimeType: 'image/jpeg' })
+      } catch {
         reject(new Error('decode-failed'))
-        return
       }
-      ctx.drawImage(img, 0, 0, w, h)
-      const dataUrl = canvas.toDataURL('image/jpeg', JPEG_QUALITY)
-      const base64 = dataUrl.split(',')[1] ?? ''
-      resolve({ base64, mimeType: 'image/jpeg' })
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
