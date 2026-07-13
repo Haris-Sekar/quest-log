@@ -81,7 +81,7 @@ export const getFoodModel = async (): Promise<GenerativeModel> => {
     const { getAI, getGenerativeModel, GoogleAIBackend, Schema } = await import('firebase/ai')
     const ai = getAI(fbApp, { backend: new GoogleAIBackend() })
     foodModel = getGenerativeModel(ai, {
-      model: 'gemini-2.5-flash',
+      model: 'gemini-flash-latest',
       generationConfig: {
         responseMimeType: 'application/json',
         responseSchema: Schema.object({
