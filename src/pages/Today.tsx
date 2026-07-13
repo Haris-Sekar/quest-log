@@ -152,6 +152,46 @@ const DayMeter = ({ state }: { state: TrackerState }) => {
   )
 }
 
+const RailStat = ({
+  label,
+  value,
+  unit,
+  accent,
+}: {
+  label: string
+  value: number | string
+  unit?: string
+  accent?: boolean
+}) => (
+  <div className="rail-stat">
+    <span className="rs-label">{label}</span>
+    <span className={`rs-val${accent ? ' accent' : ''}`}>
+      {value}
+      {unit && <small> {unit}</small>}
+    </span>
+  </div>
+)
+
+/** Desktop-only side panel — hidden on mobile via CSS, so the phone view is unchanged. */
+const TodayRail = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
+  const toGo =
+    stats.curW !== null
+      ? Math.max(0, stats.curW - state.goalWeight)
+      : state.startWeight - state.goalWeight
+  return (
+    <aside className="today-rail">
+      <div className="eyebrow">Run stats</div>
+      <div className="card rail-card">
+        <RailStat label="Current streak" value={stats.curStreak} unit="days" accent />
+        <RailStat label="Best streak" value={stats.bestStreak} unit="days" />
+        <RailStat label="Kg lost" value={stats.lost.toFixed(1)} unit="kg" accent />
+        <RailStat label="Kg to goal" value={toGo.toFixed(1)} unit="kg" />
+        <RailStat label="Perfect days" value={stats.perfectDays} />
+      </div>
+    </aside>
+  )
+}
+
 export const Today = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
   const dayNo = Math.max(1, daysBetween(state.startDate, todayKey()) + 1)
   const dateLabel = new Date().toLocaleDateString('en-IN', {
@@ -160,16 +200,19 @@ export const Today = ({ state, stats }: { state: TrackerState; stats: Stats }) =
     month: 'short',
   })
   return (
-    <div>
-      <div className="date-line">
-        {dateLabel} · Day {dayNo} of the run
+    <div className="today-page">
+      <div className="today-main">
+        <div className="date-line">
+          {dateLabel} · Day {dayNo} of the run
+        </div>
+        <div className="eyebrow">Weigh-in</div>
+        <WeighIn state={state} stats={stats} />
+        <Nudge state={state} stats={stats} />
+        <div className="eyebrow">Daily quests</div>
+        <QuestList state={state} />
+        <DayMeter state={state} />
       </div>
-      <div className="eyebrow">Weigh-in</div>
-      <WeighIn state={state} stats={stats} />
-      <Nudge state={state} stats={stats} />
-      <div className="eyebrow">Daily quests</div>
-      <QuestList state={state} />
-      <DayMeter state={state} />
+      <TodayRail state={state} stats={stats} />
     </div>
   )
 }

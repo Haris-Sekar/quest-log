@@ -23,7 +23,7 @@ const Summary = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
 }
 
 export const CalendarView = ({ state, stats }: { state: TrackerState; stats: Stats }) => (
-  <div>
+  <div className="calendar-page">
     <div className="eyebrow">The run so far</div>
     <Summary state={state} stats={stats} />
     <div className="eyebrow">The chain — don't break it</div>

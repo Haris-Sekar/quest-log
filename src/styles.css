@@ -525,6 +525,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
 
 /* ── Page grids (single column on mobile) ── */
 .page-grid { display: block; }
+/* Today's desktop stats rail is hidden on mobile — the phone view is unchanged. */
+.today-page { display: block; }
+.today-rail { display: none; }
+.rail-card { padding: 4px 16px; }
+.rail-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--edge); }
+.rail-stat:last-child { border-bottom: none; }
+.rs-label { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.rs-val { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 22px; color: var(--ink); }
+.rs-val small { font-size: 11px; color: var(--faint); }
+.rs-val.accent { color: var(--cyan); text-shadow: 0 0 12px rgba(77, 227, 255, 0.4); }
 
 /* ═══ DESKTOP ═══════════════════════════════════════════════════════════ */
 @media (min-width: 920px) {
@@ -532,7 +542,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
   .tabbar { display: none; }
   .main { padding-bottom: 0; }
   .main .hud { display: none; }
-  .shell { max-width: 1080px; margin: 0; padding: 8px 36px 44px; }
+  .shell { max-width: 1120px; margin: 0 auto; padding: 30px 40px 60px; }
 
   .sidebar {
     display: flex; flex-direction: column; gap: 18px;
@@ -554,7 +564,25 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
     color: var(--cyan); text-shadow: 0 0 16px rgba(77, 227, 255, 0.5);
   }
   .side-sub { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-left: 4px; letter-spacing: 0; text-shadow: none; }
-  .sidebar .hud-inner { padding: 0; }
+  /* Sidebar HUD: badge + rank/xp on top, streak as its own full-width row below
+     (prevents the streak chip from overflowing the narrow sidebar into main). */
+  .sidebar .hud-inner {
+    padding: 0;
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    grid-template-areas: "badge mid" "streak streak";
+    gap: 12px;
+    align-items: center;
+  }
+  .sidebar .lvl-badge { grid-area: badge; }
+  .sidebar .hud-mid { grid-area: mid; }
+  .sidebar .streak-chip {
+    grid-area: streak; width: 100%; min-width: 0;
+    display: flex; align-items: baseline; justify-content: center; gap: 6px;
+    padding: 7px 10px;
+  }
+  .sidebar .streak-chip b { display: inline; font-size: 16px; }
+  .sidebar .streak-chip span { font-size: 10px; }
   .side-nav { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
   .side-btn {
     display: flex; align-items: center; gap: 10px;
@@ -577,18 +605,35 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--cyan); outl
   .side-signout:hover { color: var(--ink); border-color: var(--muted); }
 
   .page-grid { display: grid; gap: 0 24px; align-items: start; }
-  .today-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
   .meals-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .tasks-grid { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
-  .goal-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 900px; }
+  .goal-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .goal { margin-top: 0; }
   .progress-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
   .plan-grid { grid-template-columns: 1fr 1fr; }
   .ach-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .stat-row { max-width: 640px; }
   .stat b { font-size: 26px; }
   .weigh-now b { font-size: 34px; }
   .toast { bottom: 28px; }
+
+  /* Today — two columns with a sticky stats rail on the right. */
+  .today-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 0 32px;
+    align-items: start;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .today-main { min-width: 0; }
+  .today-rail { display: block; position: sticky; top: 30px; }
+  .today-rail .eyebrow:first-child { margin-top: 0; }
+  .today-main .date-line { margin-top: 0; }
+
+  /* Single-column pages: cap width and centre so cards don't stretch. */
+  .goals-page { max-width: 960px; margin: 0 auto; }
+  .calendar-page { max-width: 780px; margin: 0 auto; }
+  .stat-row { max-width: none; }
 }
 @media (min-width: 1240px) {
   .ach-grid { grid-template-columns: repeat(4, 1fr); }

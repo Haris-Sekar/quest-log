@@ -46,7 +46,7 @@ const GoalCard = ({ goal, state, stats }: { goal: GoalDef; state: TrackerState; 
 export const Goals = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
   const done = GOALS.filter((g) => g.progress(state, stats).done).length
   return (
-    <div>
+    <div className="goals-page">
       <div className="eyebrow">Goals · {done} / {GOALS.length} completed</div>
       <StreakBanner stats={stats} />
       <div className="goal-list">
