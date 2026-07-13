@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_QUESTS } from '../data/quests'
 import { levelInfo } from '../data/ranks'
 import { dateKey, prevKey, todayKey } from './dates'
 import { defaultState } from './defaults'
 import { sanitizeState } from './sanitize'
 import { applyAchievements, computeStats, dayQuestCount } from './stats'
-import type { TrackerState } from './types'
+import type { QuestDef, TrackerState } from './types'
 
 const dayOffset = (offset: number): string => {
   const d = new Date()
@@ -128,6 +129,55 @@ describe('sanitizeState', () => {
   it('keeps goal strictly below start', () => {
     const s = sanitizeState({ startWeight: 100, goalWeight: 120 })
     expect(s.goalWeight).toBeLessThan(s.startWeight)
+  })
+})
+
+describe('computeStats — custom quests', () => {
+  const quests: QuestDef[] = [
+    { id: 'a', icon: '⭐', name: 'A', desc: '', xp: 10 },
+    { id: 'b', icon: '⭐', name: 'B', desc: '', xp: 10 },
+  ]
+
+  it('counts by the state quest list and caps the streak threshold at quest count', () => {
+    const key = todayKey()
+    const s: TrackerState = { ...defaultState(), quests, days: { [key]: { q: { a: true, b: true } } } }
+    const t = computeStats(s)
+    expect(t.count.a).toBe(1)
+    expect(t.count.b).toBe(1)
+    expect(t.perfectDays).toBe(1) // both of 2 quests done
+    expect(t.curStreak).toBe(1) // threshold is min(3, 2) = 2, both done
+  })
+
+  it('does not bank a day when only one of two custom quests is done', () => {
+    const key = todayKey()
+    const s: TrackerState = { ...defaultState(), quests, days: { [key]: { q: { a: true } } } }
+    expect(computeStats(s).curStreak).toBe(0)
+  })
+})
+
+describe('sanitizeState — quests', () => {
+  it('seeds the default quests when the field is absent', () => {
+    const { quests } = sanitizeState({})
+    expect(quests).toHaveLength(DEFAULT_QUESTS.length)
+    expect(quests[0].id).toBe('gym')
+  })
+
+  it('keeps valid quests, drops blanks, dedupes ids, and defaults bad xp', () => {
+    const { quests } = sanitizeState({
+      quests: [
+        { id: 'gym', icon: '🏋️', name: 'Custom gym', desc: 'x', xp: 25 },
+        { name: '   ' }, // blank name -> dropped
+        { id: 'gym', name: 'dup id' }, // duplicate id -> dropped
+        { id: 'z', name: 'Cold shower', xp: 9999 }, // out-of-range xp -> default 10
+      ],
+    })
+    expect(quests.map((q) => q.id)).toEqual(['gym', 'z'])
+    expect(quests[0]).toMatchObject({ name: 'Custom gym', xp: 25, icon: '🏋️' })
+    expect(quests[1].xp).toBe(10)
+  })
+
+  it('respects an explicit empty quest list', () => {
+    expect(sanitizeState({ quests: [] }).quests).toEqual([])
   })
 })
 

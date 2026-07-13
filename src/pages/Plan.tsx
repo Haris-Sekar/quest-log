@@ -55,6 +55,7 @@ const Settings = ({ state }: { state: TrackerState }) => {
       goalWeight: s.goalWeight,
       startDate: todayKey(),
       weights: [],
+      quests: s.quests,
       days: {},
       meals: {},
       tasks: [],

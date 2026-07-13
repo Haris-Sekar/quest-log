@@ -1,4 +1,7 @@
-export type QuestId = 'gym' | 'steps' | 'protein' | 'nofried' | 'water' | 'sleep'
+/** Quest ids are free-form strings now that quests are user-editable. The
+ *  default quests keep stable ids ('gym', 'nofried', …) so milestone
+ *  achievements and goals keyed on them keep working. */
+export type QuestId = string
 
 export interface QuestDef {
   id: QuestId
@@ -68,6 +71,7 @@ export interface TrackerState {
   goalWeight: number
   startDate: string
   weights: WeightEntry[]
+  quests: QuestDef[] // the player's daily quests (editable)
   days: Record<string, DayEntry>
   meals: Record<string, MealEntry[]> // date key -> meals logged that day
   tasks: TaskDef[] // user-created tasks
@@ -76,7 +80,7 @@ export interface TrackerState {
 }
 
 export interface Stats {
-  count: Record<QuestId, number>
+  count: Record<string, number>
   perfectDays: number
   curStreak: number
   bestStreak: number

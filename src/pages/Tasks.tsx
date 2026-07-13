@@ -39,7 +39,49 @@ const useTaskActions = () => {
 
   const add = (task: TaskDef) => update((s) => ({ ...s, tasks: [...s.tasks, task] }))
 
-  return { setValue, remove, add }
+  // Replace a task wholesale. If its period or kind changed, drop its log so
+  // stale completions from the old shape don't linger.
+  const edit = (task: TaskDef, resetLog: boolean) =>
+    update((s) => {
+      const tasks = s.tasks.map((t) => (t.id === task.id ? task : t))
+      let taskLog = s.taskLog
+      if (resetLog && s.taskLog[task.id]) {
+        taskLog = { ...s.taskLog }
+        delete taskLog[task.id]
+      }
+      return { ...s, tasks, taskLog }
+    })
+
+  return { setValue, remove, add, edit }
+}
+
+const buildTask = (
+  base: TaskDef,
+  fields: { title: string; period: TaskPeriod; kind: TaskKind; target: string; unit: string; text: string },
+): { task: TaskDef; error?: string } => {
+  const title = fields.title.trim()
+  if (!title) return { task: base, error: 'Name the task first.' }
+  const task: TaskDef = {
+    id: base.id,
+    title: title.slice(0, TASK_LIMITS.title.max),
+    period: fields.period,
+    kind: fields.kind,
+    createdAt: base.createdAt,
+  }
+  if (fields.kind === 'number') {
+    const n = parseFloat(fields.target)
+    if (!Number.isFinite(n) || n < TASK_LIMITS.target.min || n > TASK_LIMITS.target.max) {
+      return { task, error: `Set a target between ${TASK_LIMITS.target.min} and ${TASK_LIMITS.target.max}.` }
+    }
+    task.target = Math.round(n * 10) / 10
+    if (fields.unit.trim()) task.unit = fields.unit.trim().slice(0, TASK_LIMITS.unit.max)
+  }
+  if (fields.kind === 'text') {
+    const tt = fields.text.trim()
+    if (!tt) return { task, error: 'Set the target text.' }
+    task.targetText = tt.slice(0, TASK_LIMITS.text.max)
+  }
+  return { task }
 }
 
 // ── Create form ─────────────────────────────────────────────────────────────
@@ -209,11 +251,96 @@ const TextControl = ({ task, value }: { task: TaskDef; value: TaskValue | undefi
   )
 }
 
+const TaskEditForm = ({ task, onDone }: { task: TaskDef; onDone: () => void }) => {
+  const { edit } = useTaskActions()
+  const toast = useToast()
+  const [title, setTitle] = useState(task.title)
+  const [period, setPeriod] = useState<TaskPeriod>(task.period)
+  const [kind, setKind] = useState<TaskKind>(task.kind)
+  const [target, setTarget] = useState(task.target != null ? String(task.target) : '')
+  const [unit, setUnit] = useState(task.unit ?? '')
+  const [text, setText] = useState(task.targetText ?? '')
+
+  const save = () => {
+    const { task: next, error } = buildTask(task, { title, period, kind, target, unit, text })
+    if (error) {
+      toast('⚠️ Check the task', error)
+      return
+    }
+    edit(next, next.period !== task.period || next.kind !== task.kind)
+    toast('✓ Task updated', next.title)
+    onDone()
+  }
+
+  return (
+    <div className="card task-form task-edit-form">
+      <input
+        className="task-title-input"
+        type="text"
+        maxLength={TASK_LIMITS.title.max}
+        aria-label="Task title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && save()}
+      />
+      <div className="task-form-row">
+        <div className="seg" role="group" aria-label="Repeat">
+          {TASK_PERIODS.map((p) => (
+            <button key={p.id} className={`seg-btn${period === p.id ? ' on' : ''}`} aria-pressed={period === p.id} onClick={() => setPeriod(p.id)}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="task-form-row">
+        <div className="seg" role="group" aria-label="Completion type">
+          {TASK_KINDS.map((k) => (
+            <button key={k.id} className={`seg-btn${kind === k.id ? ' on' : ''}`} aria-pressed={kind === k.id} onClick={() => setKind(k.id)}>
+              <span aria-hidden>{k.icon}</span> {k.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      {kind === 'number' && (
+        <div className="task-form-row task-targets">
+          <label>
+            <span>Target</span>
+            <input type="number" inputMode="decimal" value={target} onChange={(e) => setTarget(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
+          </label>
+          <label>
+            <span>Unit (optional)</span>
+            <input type="text" maxLength={TASK_LIMITS.unit.max} value={unit} onChange={(e) => setUnit(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
+          </label>
+        </div>
+      )}
+      {kind === 'text' && (
+        <div className="task-form-row task-targets">
+          <label className="grow">
+            <span>Target text (match to complete)</span>
+            <input type="text" maxLength={TASK_LIMITS.text.max} value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && save()} />
+          </label>
+        </div>
+      )}
+      <div className="task-edit-actions">
+        <button className="btn ghost" onClick={onDone}>
+          Cancel
+        </button>
+        <button className="btn" onClick={save}>
+          Save
+        </button>
+      </div>
+    </div>
+  )
+}
+
 const TaskRow = ({ task, log }: { task: TaskDef; log: TrackerState['taskLog'] }) => {
   const { setValue, remove } = useTaskActions()
+  const [editing, setEditing] = useState(false)
   const value = taskValueOn(task, log, todayKey())
   const done = taskDoneOn(task, log, todayKey())
   const streak = taskStreak(task, log, todayKey())
+
+  if (editing) return <TaskEditForm task={task} onDone={() => setEditing(false)} />
 
   return (
     <div className={`task-row${done ? ' done' : ''}`}>
@@ -239,6 +366,9 @@ const TaskRow = ({ task, log }: { task: TaskDef; log: TrackerState['taskLog'] })
       </span>
       {task.kind === 'number' && <NumberControl task={task} value={value} />}
       {task.kind === 'text' && <TextControl task={task} value={value} />}
+      <button className="task-edit" aria-label={`Edit ${task.title}`} onClick={() => setEditing(true)}>
+        ✎
+      </button>
       <button className="task-del" aria-label={`Delete ${task.title}`} onClick={() => remove(task.id)}>
         ✕
       </button>

@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { QUESTS, STREAK_MIN, WEIGH_XP } from '../data/quests'
+import { QUEST_LIMITS, STREAK_MIN, WEIGH_XP, newQuestId } from '../data/quests'
 import { daysBetween, todayKey } from '../state/dates'
 import { dayQuestCount } from '../state/stats'
-import type { QuestId, Stats, TrackerState } from '../state/types'
+import type { QuestDef, QuestId, Stats, TrackerState } from '../state/types'
 import { useStore } from '../store'
 import { useToast } from '../ui/Toast'
 
@@ -89,6 +89,7 @@ const Nudge = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
 
 const QuestList = ({ state }: { state: TrackerState }) => {
   const { update } = useStore()
+  const [editing, setEditing] = useState(false)
   const key = todayKey()
   const day = state.days[key]
 
@@ -101,52 +102,142 @@ const QuestList = ({ state }: { state: TrackerState }) => {
       return { ...s, days: { ...s.days, [key]: { ...cur, q } } }
     })
 
+  const patchQuest = (id: QuestId, patch: Partial<QuestDef>) =>
+    update((s) => ({ ...s, quests: s.quests.map((q) => (q.id === id ? { ...q, ...patch } : q)) }))
+
+  const addQuest = () =>
+    update((s) =>
+      s.quests.length >= QUEST_LIMITS.max
+        ? s
+        : { ...s, quests: [...s.quests, { id: newQuestId(), icon: '⭐', name: 'New quest', desc: '', xp: 10 }] },
+    )
+
+  const removeQuest = (id: QuestId) =>
+    update((s) => ({ ...s, quests: s.quests.filter((q) => q.id !== id) }))
+
   return (
-    <div>
-      {QUESTS.map((q) => {
-        const done = Boolean(day?.q?.[q.id])
-        return (
-          <button
-            key={q.id}
-            className={`quest${done ? ' done' : ''}`}
-            aria-pressed={done}
-            onClick={() => toggle(q.id)}
-          >
-            <span className="q-icon">{q.icon}</span>
-            <span className="q-body">
-              <span className="q-name">{q.name}</span>
-              <span className="q-desc">{q.desc}</span>
-            </span>
-            <span className="q-xp">
-              {done ? '+' : ''}
-              {q.xp} XP
-            </span>
-            <span className="q-check">✓</span>
-          </button>
-        )
-      })}
+    <>
+      <div className="eyebrow eyebrow-row">
+        <span>Daily quests</span>
+        <button className="eyebrow-action" onClick={() => setEditing((e) => !e)}>
+          {editing ? '✓ Done' : '✎ Edit'}
+        </button>
+      </div>
+      {editing ? (
+        <div className="quest-edit-list">
+          {state.quests.map((q) => (
+            <QuestEditRow key={q.id} quest={q} onChange={patchQuest} onRemove={removeQuest} />
+          ))}
+          {state.quests.length < QUEST_LIMITS.max && (
+            <button className="btn ghost wide" onClick={addQuest}>
+              + Add quest
+            </button>
+          )}
+        </div>
+      ) : (
+        <div>
+          {state.quests.length === 0 ? (
+            <div className="card meal-empty">No quests yet — tap ✎ Edit to add your own.</div>
+          ) : (
+            state.quests.map((q) => {
+              const done = Boolean(day?.q?.[q.id])
+              return (
+                <button
+                  key={q.id}
+                  className={`quest${done ? ' done' : ''}`}
+                  aria-pressed={done}
+                  onClick={() => toggle(q.id)}
+                >
+                  <span className="q-icon">{q.icon}</span>
+                  <span className="q-body">
+                    <span className="q-name">{q.name}</span>
+                    {q.desc && <span className="q-desc">{q.desc}</span>}
+                  </span>
+                  <span className="q-xp">
+                    {done ? '+' : ''}
+                    {q.xp} XP
+                  </span>
+                  <span className="q-check">✓</span>
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+const QuestEditRow = ({
+  quest,
+  onChange,
+  onRemove,
+}: {
+  quest: QuestDef
+  onChange: (id: QuestId, patch: Partial<QuestDef>) => void
+  onRemove: (id: QuestId) => void
+}) => {
+  const [icon, setIcon] = useState(quest.icon)
+  const [name, setName] = useState(quest.name)
+  const [desc, setDesc] = useState(quest.desc)
+  const [xp, setXp] = useState(String(quest.xp))
+
+  const commit = () => {
+    const x = Math.round(parseFloat(xp))
+    onChange(quest.id, {
+      icon: icon.trim() || '⭐',
+      name: name.trim() || quest.name,
+      desc: desc.trim(),
+      xp: Number.isFinite(x) ? Math.max(QUEST_LIMITS.xp.min, Math.min(QUEST_LIMITS.xp.max, x)) : quest.xp,
+    })
+  }
+
+  return (
+    <div className="quest-edit">
+      <div className="qe-row1">
+        <input className="qe-icon" value={icon} maxLength={QUEST_LIMITS.icon.max} aria-label="Icon" onChange={(e) => setIcon(e.target.value)} onBlur={commit} />
+        <input className="qe-name" value={name} maxLength={QUEST_LIMITS.name.max} aria-label="Quest name" onChange={(e) => setName(e.target.value)} onBlur={commit} />
+        <input className="qe-xp" type="number" inputMode="numeric" value={xp} aria-label="XP" onChange={(e) => setXp(e.target.value)} onBlur={commit} />
+        <span className="qe-xp-lbl">xp</span>
+        <button className="qe-del" aria-label={`Delete ${quest.name}`} onClick={() => onRemove(quest.id)}>
+          ✕
+        </button>
+      </div>
+      <input
+        className="qe-desc"
+        value={desc}
+        maxLength={QUEST_LIMITS.desc.max}
+        placeholder="Short description (optional)"
+        aria-label="Quest description"
+        onChange={(e) => setDesc(e.target.value)}
+        onBlur={commit}
+      />
     </div>
   )
 }
 
 const DayMeter = ({ state }: { state: TrackerState }) => {
-  const n = dayQuestCount(state.days[todayKey()])
-  const banked = n >= STREAK_MIN
-  const left = STREAK_MIN - n
+  const total = state.quests.length
+  const n = dayQuestCount(state.days[todayKey()], state.quests)
+  const bankMin = Math.min(STREAK_MIN, total)
+  const banked = total > 0 && n >= bankMin
+  const left = Math.max(0, bankMin - n)
   return (
     <div className="card">
       <div className="day-meter">
         <div className="track">
-          <div className="fill" style={{ width: `${(n / QUESTS.length) * 100}%` }} />
+          <div className="fill" style={{ width: `${total ? (n / total) * 100 : 0}%` }} />
         </div>
         <span className="label">
-          {n} / {QUESTS.length}
+          {n} / {total}
         </span>
       </div>
       <div className={`streak-note${banked ? ' safe' : ''}`}>
-        {banked
-          ? '🔥 Streak day banked. See you tomorrow.'
-          : `Complete ${left} more quest${left > 1 ? 's' : ''} to bank today as a streak day.`}
+        {total === 0
+          ? 'Add a quest to start banking streak days.'
+          : banked
+            ? '🔥 Streak day banked. See you tomorrow.'
+            : `Complete ${left} more quest${left > 1 ? 's' : ''} to bank today as a streak day.`}
       </div>
     </div>
   )
@@ -208,7 +299,6 @@ export const Today = ({ state, stats }: { state: TrackerState; stats: Stats }) =
         <div className="eyebrow">Weigh-in</div>
         <WeighIn state={state} stats={stats} />
         <Nudge state={state} stats={stats} />
-        <div className="eyebrow">Daily quests</div>
         <QuestList state={state} />
         <DayMeter state={state} />
       </div>

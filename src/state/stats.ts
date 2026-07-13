@@ -1,28 +1,32 @@
 import { ACHIEVEMENTS } from '../data/achievements'
-import { QUESTS, STREAK_MIN, WEIGH_XP } from '../data/quests'
+import { DEFAULT_QUESTS, STREAK_MIN, WEIGH_XP } from '../data/quests'
 import { RARITY_XP } from '../data/ranks'
 import { prevKey, todayKey } from './dates'
-import type { DayEntry, QuestId, Stats, TrackerState } from './types'
+import type { DayEntry, QuestDef, Stats, TrackerState } from './types'
 
-export const dayQuestCount = (day: DayEntry | undefined): number =>
-  day?.q ? QUESTS.filter((q) => day.q[q.id]).length : 0
+export const dayQuestCount = (day: DayEntry | undefined, quests: QuestDef[] = DEFAULT_QUESTS): number =>
+  day?.q ? quests.filter((q) => day.q[q.id]).length : 0
 
-export const qualifies = (day: DayEntry | undefined): boolean =>
-  dayQuestCount(day) >= STREAK_MIN
+/** Quests needed to bank a streak day: STREAK_MIN, but never more than the quest count. */
+const streakThreshold = (quests: QuestDef[]): number => Math.min(STREAK_MIN, quests.length)
 
-const questCounts = (s: TrackerState): { count: Record<QuestId, number>; perfectDays: number } => {
-  const count = Object.fromEntries(QUESTS.map((q) => [q.id, 0])) as Record<QuestId, number>
+export const qualifies = (day: DayEntry | undefined, quests: QuestDef[] = DEFAULT_QUESTS): boolean =>
+  quests.length > 0 && dayQuestCount(day, quests) >= streakThreshold(quests)
+
+const questCounts = (s: TrackerState): { count: Record<string, number>; perfectDays: number } => {
+  const quests = s.quests
+  const count = Object.fromEntries(quests.map((q) => [q.id, 0])) as Record<string, number>
   let perfectDays = 0
   for (const day of Object.values(s.days)) {
     if (!day?.q) continue
     let n = 0
-    for (const q of QUESTS) {
+    for (const q of quests) {
       if (day.q[q.id]) {
         count[q.id] += 1
         n += 1
       }
     }
-    if (n === QUESTS.length) perfectDays += 1
+    if (quests.length > 0 && n === quests.length) perfectDays += 1
   }
   return { count, perfectDays }
 }
@@ -30,9 +34,9 @@ const questCounts = (s: TrackerState): { count: Record<QuestId, number>; perfect
 const currentStreak = (s: TrackerState): number => {
   let cur = 0
   let k = todayKey()
-  if (qualifies(s.days[k])) cur = 1
+  if (qualifies(s.days[k], s.quests)) cur = 1
   k = prevKey(k)
-  while (qualifies(s.days[k])) {
+  while (qualifies(s.days[k], s.quests)) {
     cur += 1
     k = prevKey(k)
   }
@@ -42,7 +46,7 @@ const currentStreak = (s: TrackerState): number => {
 const bestStreak = (s: TrackerState, floor: number): number => {
   let best = floor
   const keys = Object.keys(s.days)
-    .filter((d) => qualifies(s.days[d]))
+    .filter((d) => qualifies(s.days[d], s.quests))
     .sort()
   let run = 0
   let prev: string | null = null
@@ -57,7 +61,7 @@ const bestStreak = (s: TrackerState, floor: number): number => {
 const totalXp = (s: TrackerState): number => {
   let xp = 0
   for (const day of Object.values(s.days)) {
-    if (day?.q) for (const q of QUESTS) if (day.q[q.id]) xp += q.xp
+    if (day?.q) for (const q of s.quests) if (day.q[q.id]) xp += q.xp
     if (day?.weighed) xp += WEIGH_XP
   }
   for (const id of Object.keys(s.ach)) {
