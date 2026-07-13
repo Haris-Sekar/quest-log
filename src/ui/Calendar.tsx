@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { KCAL_TARGET } from '../data/meals'
 import { QUESTS, STREAK_MIN } from '../data/quests'
 import { pad2, todayKey } from '../state/dates'
+import { mealTotals } from '../state/meals'
 import { dayQuestCount } from '../state/stats'
 import type { Stats, TrackerState } from '../state/types'
 
@@ -22,6 +24,10 @@ export const Calendar = ({ state, stats }: { state: TrackerState; stats: Stats }
     const key = `${y}-${pad2(m + 1)}-${pad2(d)}`
     const day = state.days[key]
     const n = dayQuestCount(day)
+    const meals = mealTotals(state.meals[key])
+    const kcal = Math.round(meals.kcal)
+    const showKcal = meals.items > 0 && key <= tk
+    const over = kcal > KCAL_TARGET
     let cls = 'cal-day'
     if (key > tk) cls += ' future'
     else if (key < state.startDate) cls += ' pre'
@@ -29,9 +35,11 @@ export const Calendar = ({ state, stats }: { state: TrackerState; stats: Stats }
     else if (n >= STREAK_MIN) cls += ' bank'
     else if (n > 0) cls += ' part'
     if (key === tk) cls += ' today'
+    const label = `${key}: ${n} of ${QUESTS.length} quests${showKcal ? `, ${kcal} kcal` : ''}`
     cells.push(
-      <div key={key} className={cls} role="img" aria-label={`${key}: ${n} of ${QUESTS.length} quests`}>
-        {d}
+      <div key={key} className={cls} role="img" aria-label={label}>
+        <span className="cal-dnum">{d}</span>
+        {showKcal && <span className={`cal-kcal${over ? ' over' : ''}`}>{kcal}</span>}
         {day?.weighed && <span className="w-dot" />}
       </div>,
     )
@@ -82,6 +90,9 @@ export const Calendar = ({ state, stats }: { state: TrackerState; stats: Stats }
         </span>
         <span>
           <span className="k k-weigh" /> weigh-in
+        </span>
+        <span>
+          <span className="k-kcal" /> kcal · <span className="over">over {KCAL_TARGET}</span>
         </span>
       </div>
     </div>

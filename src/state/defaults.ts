@@ -8,5 +8,7 @@ export const defaultState = (): TrackerState => ({
   weights: [],
   days: {},
   meals: {},
+  tasks: [],
+  taskLog: {},
   ach: {},
 })

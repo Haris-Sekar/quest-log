@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { mealTotals, newMealId } from './meals'
+import { mealDayStats, mealTotals, newMealId } from './meals'
 import { sanitizeState } from './sanitize'
-import type { MealEntry } from './types'
+import type { MealEntry, TrackerState } from './types'
 
 const meal = (over: Partial<MealEntry> = {}): MealEntry => ({
   id: 'x',
@@ -27,6 +27,30 @@ describe('mealTotals', () => {
     expect(totals.kcal).toBe(40 * 3 + 78 * 2)
     expect(totals.protein).toBe(2 * 3 + 6 * 2)
     expect(totals.items).toBe(5)
+  })
+})
+
+describe('mealDayStats', () => {
+  const meals: TrackerState['meals'] = {
+    // 110g protein hit, under 2000 kcal
+    '2026-07-10': [meal({ kcal: 500, protein: 55, qty: 1 }), meal({ kcal: 400, protein: 60, qty: 1 })],
+    // under calories but protein short
+    '2026-07-11': [meal({ kcal: 1200, protein: 40, qty: 1 })],
+    // over calories, protein ok
+    '2026-07-12': [meal({ kcal: 2200, protein: 120, qty: 1 })],
+    '2026-07-13': [], // empty -> ignored
+  }
+
+  it('counts logged, protein-target, and on-calorie days and averages kcal', () => {
+    const s = mealDayStats(meals)
+    expect(s.loggedDays).toBe(3)
+    expect(s.proteinDays).toBe(2) // 07-10 (115g) and 07-12 (120g)
+    expect(s.onCalorieDays).toBe(2) // 07-10 (900) and 07-11 (1200)
+    expect(s.avgKcal).toBe(Math.round((900 + 1200 + 2200) / 3))
+  })
+
+  it('returns zeros when nothing is logged', () => {
+    expect(mealDayStats({})).toEqual({ loggedDays: 0, proteinDays: 0, onCalorieDays: 0, avgKcal: 0 })
   })
 })
 

@@ -4,7 +4,6 @@ import { daysBetween, todayKey } from '../state/dates'
 import { dayQuestCount } from '../state/stats'
 import type { QuestId, Stats, TrackerState } from '../state/types'
 import { useStore } from '../store'
-import { Calendar } from '../ui/Calendar'
 import { useToast } from '../ui/Toast'
 
 const WeighIn = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
@@ -161,24 +160,16 @@ export const Today = ({ state, stats }: { state: TrackerState; stats: Stats }) =
     month: 'short',
   })
   return (
-    <div className="page-grid today-grid">
-      <div className="col">
-        <div className="date-line">
-          {dateLabel} · Day {dayNo} of the run
-        </div>
-        <div className="eyebrow">Weigh-in</div>
-        <WeighIn state={state} stats={stats} />
-        <Nudge state={state} stats={stats} />
-        <div className="eyebrow">Daily quests</div>
-        <QuestList state={state} />
-        <DayMeter state={state} />
+    <div>
+      <div className="date-line">
+        {dateLabel} · Day {dayNo} of the run
       </div>
-      <div className="col">
-        <div className="eyebrow">The chain — don't break it</div>
-        <div className="card">
-          <Calendar state={state} stats={stats} />
-        </div>
-      </div>
+      <div className="eyebrow">Weigh-in</div>
+      <WeighIn state={state} stats={stats} />
+      <Nudge state={state} stats={stats} />
+      <div className="eyebrow">Daily quests</div>
+      <QuestList state={state} />
+      <DayMeter state={state} />
     </div>
   )
 }

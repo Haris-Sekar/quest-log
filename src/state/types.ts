@@ -38,6 +38,26 @@ export interface MealTotals {
   items: number
 }
 
+/** How often a task repeats. 'once' is a one-off to-do that stays done. */
+export type TaskPeriod = 'once' | 'daily' | 'weekly' | 'monthly'
+
+/** How a task is completed: a tap, hitting a number target, or matching text. */
+export type TaskKind = 'toggle' | 'number' | 'text'
+
+export interface TaskDef {
+  id: string
+  title: string
+  period: TaskPeriod
+  kind: TaskKind
+  target?: number // for kind 'number'
+  targetText?: string // for kind 'text'
+  unit?: string // optional label for number tasks, e.g. "min", "L"
+  createdAt: string // YYYY-MM-DD
+}
+
+/** The value logged for a task in a given period bucket. */
+export type TaskValue = number | string | boolean
+
 export interface WeightEntry {
   d: string // YYYY-MM-DD
   kg: number
@@ -50,6 +70,8 @@ export interface TrackerState {
   weights: WeightEntry[]
   days: Record<string, DayEntry>
   meals: Record<string, MealEntry[]> // date key -> meals logged that day
+  tasks: TaskDef[] // user-created tasks
+  taskLog: Record<string, Record<string, TaskValue>> // taskId -> periodKey -> value
   ach: Record<string, string> // achievement id -> unlock date
 }
 

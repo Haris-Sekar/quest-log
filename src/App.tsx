@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
 import { SignIn } from './auth/SignIn'
 import { Awards } from './pages/Awards'
+import { CalendarView } from './pages/CalendarView'
+import { Goals } from './pages/Goals'
 import { Meals } from './pages/Meals'
 import { Plan } from './pages/Plan'
 import { Progress } from './pages/Progress'
+import { Tasks } from './pages/Tasks'
 import { Today } from './pages/Today'
 import { computeStats } from './state/stats'
 import { useStore } from './store'
@@ -37,6 +40,9 @@ export const App = () => {
         <main className="shell">
           {tab === 'today' && <Today state={state} stats={stats} />}
           {tab === 'meals' && <Meals state={state} />}
+          {tab === 'tasks' && <Tasks state={state} />}
+          {tab === 'calendar' && <CalendarView state={state} stats={stats} />}
+          {tab === 'goals' && <Goals state={state} stats={stats} />}
           {tab === 'progress' && <Progress state={state} stats={stats} />}
           {tab === 'awards' && <Awards state={state} />}
           {tab === 'plan' && <Plan state={state} stats={stats} />}

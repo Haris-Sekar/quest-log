@@ -1,8 +1,10 @@
 import { MEAL_LIMITS, MEAL_TYPES } from '../data/meals'
+import { TASK_KINDS, TASK_LIMITS, TASK_PERIODS } from '../data/tasks'
 import { newMealId } from './meals'
+import { newTaskId } from './tasks'
 import { DATE_RE } from './dates'
 import { defaultState } from './defaults'
-import type { MealEntry, MealType, TrackerState } from './types'
+import type { MealEntry, MealType, TaskDef, TaskKind, TaskPeriod, TaskValue, TrackerState } from './types'
 
 const num = (v: unknown, lo: number, hi: number, fallback: number): number => {
   const n = typeof v === 'number' ? v : parseFloat(String(v))
@@ -11,6 +13,9 @@ const num = (v: unknown, lo: number, hi: number, fallback: number): number => {
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v)
+
+// Shared default, used by task sanitization for the createdAt fallback.
+const d0 = defaultState()
 
 const MEAL_TYPE_IDS = new Set<string>(MEAL_TYPES.map((m) => m.id))
 
@@ -40,6 +45,56 @@ const sanitizeMeals = (parsed: unknown): TrackerState['meals'] => {
   return out
 }
 
+const TASK_PERIOD_IDS = new Set<string>(TASK_PERIODS.map((p) => p.id))
+const TASK_KIND_IDS = new Set<string>(TASK_KINDS.map((k) => k.id))
+
+const sanitizeTask = (raw: unknown): TaskDef | null => {
+  if (!isRecord(raw)) return null
+  const title = typeof raw.title === 'string' ? raw.title.trim().slice(0, TASK_LIMITS.title.max) : ''
+  if (!title) return null
+  const period = (typeof raw.period === 'string' && TASK_PERIOD_IDS.has(raw.period) ? raw.period : 'once') as TaskPeriod
+  const kind = (typeof raw.kind === 'string' && TASK_KIND_IDS.has(raw.kind) ? raw.kind : 'toggle') as TaskKind
+  const task: TaskDef = {
+    id: typeof raw.id === 'string' && raw.id ? raw.id : newTaskId(),
+    title,
+    period,
+    kind,
+    createdAt:
+      typeof raw.createdAt === 'string' && DATE_RE.test(raw.createdAt) ? raw.createdAt : d0.startDate,
+  }
+  if (kind === 'number') {
+    task.target = num(raw.target, TASK_LIMITS.target.min, TASK_LIMITS.target.max, 1)
+    if (typeof raw.unit === 'string' && raw.unit.trim()) task.unit = raw.unit.trim().slice(0, TASK_LIMITS.unit.max)
+  }
+  if (kind === 'text') {
+    task.targetText = typeof raw.targetText === 'string' ? raw.targetText.trim().slice(0, TASK_LIMITS.text.max) : ''
+  }
+  return task
+}
+
+const sanitizeTasks = (parsed: unknown): { tasks: TaskDef[]; ids: Set<string> } => {
+  const tasks = (Array.isArray(parsed) ? parsed : [])
+    .map(sanitizeTask)
+    .filter((t): t is TaskDef => t !== null)
+  return { tasks, ids: new Set(tasks.map((t) => t.id)) }
+}
+
+const sanitizeTaskLog = (parsed: unknown, validIds: Set<string>): TrackerState['taskLog'] => {
+  if (!isRecord(parsed)) return {}
+  const out: TrackerState['taskLog'] = {}
+  for (const [id, buckets] of Object.entries(parsed)) {
+    if (!validIds.has(id) || !isRecord(buckets)) continue
+    const clean: Record<string, TaskValue> = {}
+    for (const [pk, v] of Object.entries(buckets)) {
+      if (typeof v === 'boolean' || typeof v === 'string' || (typeof v === 'number' && Number.isFinite(v))) {
+        clean[pk] = v
+      }
+    }
+    if (Object.keys(clean).length) out[id] = clean
+  }
+  return out
+}
+
 /**
  * Coerce untrusted input (storage, imported backups, remote docs) into a safe
  * TrackerState: only validated numbers and date keys survive.
@@ -49,6 +104,7 @@ export const sanitizeState = (parsed: unknown): TrackerState => {
   if (!isRecord(parsed)) return d
   const start = num(parsed.startWeight, 40, 300, d.startWeight)
   const weightsRaw = Array.isArray(parsed.weights) ? parsed.weights : []
+  const { tasks, ids } = sanitizeTasks(parsed.tasks)
   return {
     startWeight: start,
     goalWeight: Math.min(num(parsed.goalWeight, 40, 300, d.goalWeight), start - 0.1),
@@ -63,6 +119,8 @@ export const sanitizeState = (parsed: unknown): TrackerState => {
       .sort((a, b) => (a.d < b.d ? -1 : 1)),
     days: isRecord(parsed.days) ? (parsed.days as TrackerState['days']) : {},
     meals: sanitizeMeals(parsed.meals),
+    tasks,
+    taskLog: sanitizeTaskLog(parsed.taskLog, ids),
     ach: isRecord(parsed.ach) ? (parsed.ach as TrackerState['ach']) : {},
   }
 }

@@ -57,6 +57,8 @@ const Settings = ({ state }: { state: TrackerState }) => {
       weights: [],
       days: {},
       meals: {},
+      tasks: [],
+      taskLog: {},
       ach: {},
     }))
     toast('↺ Fresh run started', "Day 1. Let's go.")
