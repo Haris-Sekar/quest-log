@@ -106,10 +106,15 @@ const MealForm = ({ dayKey }: { dayKey: string }) => {
     if (!file) return
     setScanning(true)
     try {
-      const draft = toMealDraft(await analyzeFoodImage(file))
+      const estimate = await analyzeFoodImage(file)
+      const draft = toMealDraft(estimate)
       setForm((f) => ({ ...f, ...draft }))
       const est = `${Math.round(Number(draft.kcal))} kcal`
-      toast('🔍 Scanned', `${draft.name} · ~${est}. Review the numbers, then add.`)
+      const tail =
+        estimate.confidence === 'low'
+          ? 'Rough guess — double-check the numbers.'
+          : 'Review the numbers, then add.'
+      toast('🔍 Scanned', `${draft.name} · ~${est}. ${tail}`)
     } catch (err: unknown) {
       const code = err instanceof Error ? err.message : ''
       if (code === 'decode-failed') toast('⚠️ Bad image', "Couldn't read that image file.")

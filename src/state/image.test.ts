@@ -22,4 +22,8 @@ describe('fitWithin', () => {
     // 1000x333 capped at 500 -> scale 0.5 -> 500 x 166.5 -> rounds to 167
     expect(fitWithin(1000, 333, 500)).toEqual({ w: 500, h: 167 })
   })
+
+  it('leaves an image whose longest edge equals max unchanged', () => {
+    expect(fitWithin(1024, 768, 1024)).toEqual({ w: 1024, h: 768 })
+  })
 })

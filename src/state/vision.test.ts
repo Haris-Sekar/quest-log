@@ -43,4 +43,15 @@ describe('toMealDraft', () => {
   it('trims whitespace from the description', () => {
     expect(toMealDraft(est({ description: '  Dosa  ' })).name).toBe('Dosa')
   })
+
+  it('keeps values exactly at the limits unchanged', () => {
+    const d = toMealDraft(est({ kcal: 5000, protein: 500 }))
+    expect(d.kcal).toBe('5000')
+    expect(d.protein).toBe('500')
+  })
+
+  it('keeps a description of exactly 80 characters', () => {
+    const exact = 'a'.repeat(80)
+    expect(toMealDraft(est({ description: exact })).name).toBe(exact)
+  })
 })

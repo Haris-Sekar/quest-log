@@ -47,7 +47,7 @@ const PROMPT = [
  *  quota errors propagate to the caller. */
 export const analyzeFoodImage = async (file: File): Promise<FoodEstimate> => {
   const { base64, mimeType } = await compressImage(file)
-  const model = getFoodModel()
+  const model = await getFoodModel()
   const result = await model.generateContent([
     PROMPT,
     { inlineData: { data: base64, mimeType } },
@@ -62,6 +62,7 @@ export const analyzeFoodImage = async (file: File): Promise<FoodEstimate> => {
     throw new Error('empty-result')
   }
 
+  if (parsed === null || typeof parsed !== 'object') throw new Error('empty-result')
   const raw = parsed as Partial<FoodEstimate>
   if (typeof raw.description !== 'string') throw new Error('empty-result')
   const confidence: FoodEstimate['confidence'] =
