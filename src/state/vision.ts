@@ -42,16 +42,37 @@ const PROMPT = [
   'confidence (low if the food is unclear or hard to size, high if obvious).',
 ].join(' ')
 
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
+
+/** Matches the transient "model overloaded / high demand / rate limited"
+ *  errors that are worth retrying, as opposed to permanent ones (bad key,
+ *  disabled API, model not found). */
+const TRANSIENT = /high demand|overloaded|unavailable|try again|rate limit|quota|resource exhausted|503|429/i
+
 /** Send a food photo to Gemini and get back a single combined estimate.
- *  Throws Error('empty-result') on an unparseable/empty response; network and
- *  quota errors propagate to the caller. */
+ *  Retries a few times with backoff on transient overload/rate-limit errors;
+ *  throws Error('empty-result') on an unparseable/empty response. Permanent
+ *  errors (bad key, disabled API, model not found) propagate immediately. */
 export const analyzeFoodImage = async (file: File): Promise<FoodEstimate> => {
   const { base64, mimeType } = await compressImage(file)
   const model = await getFoodModel()
-  const result = await model.generateContent([
-    PROMPT,
-    { inlineData: { data: base64, mimeType } },
-  ])
+  const request = [PROMPT, { inlineData: { data: base64, mimeType } }]
+
+  let result: Awaited<ReturnType<typeof model.generateContent>> | undefined
+  let lastErr: unknown
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await sleep(600 * attempt) // 0, 600ms, 1200ms
+    try {
+      result = await model.generateContent(request)
+      break
+    } catch (err: unknown) {
+      lastErr = err
+      const msg = err instanceof Error ? err.message : ''
+      if (!TRANSIENT.test(msg)) throw err // permanent — don't waste retries
+    }
+  }
+  if (!result) throw lastErr
+
   const text = result.response.text()
   if (!text) throw new Error('empty-result')
 
