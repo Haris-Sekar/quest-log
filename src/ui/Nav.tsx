@@ -1,7 +1,22 @@
+import { BOSSES, bossDefeated } from '../data/bosses'
 import { useStore } from '../store'
 import type { Stats } from '../state/types'
 import { Hud } from './Hud'
 import { TABS, type TabId } from './tabs'
+
+/** The current fight — first boss not yet defeated at the lowest logged weight. */
+const NextBoss = ({ stats }: { stats: Stats }) => {
+  const boss = BOSSES.find((b) => !bossDefeated(b, stats.minW))
+  if (!boss) return null
+  return (
+    <div className="card side-boss">
+      <div className="sb-eyebrow">Next boss</div>
+      <div className="sb-w">{boss.w} kg</div>
+      <div className="sb-name">{boss.name}</div>
+      <div className="sb-tip">{boss.tip}</div>
+    </div>
+  )
+}
 
 interface NavProps {
   tab: TabId
@@ -33,7 +48,7 @@ export const Sidebar = ({ tab, onTab, stats }: NavProps) => {
   return (
     <aside className="sidebar">
       <div className="side-logo">
-        ⚔️ QuestLog <span className="side-sub">150 → 90</span>
+        QUESTLOG <span className="side-sub">150 → 90</span>
       </div>
       <Hud stats={stats} />
       <nav className="side-nav" aria-label="Sections">
@@ -48,6 +63,7 @@ export const Sidebar = ({ tab, onTab, stats }: NavProps) => {
         ))}
       </nav>
       <div className="side-foot">
+        <NextBoss stats={stats} />
         {mode === 'local' ? (
           <span className="side-user">Local mode — no account</span>
         ) : (

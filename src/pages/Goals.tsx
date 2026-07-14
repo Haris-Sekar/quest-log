@@ -33,7 +33,7 @@ const GoalCard = ({ goal, state, stats }: { goal: GoalDef; state: TrackerState; 
           <span className="goal-name">{goal.name}</span>
           <span className="goal-desc">{goal.desc}</span>
         </span>
-        <span className="goal-state">{p.done ? '✓' : `${pct}%`}</span>
+        <span className="goal-state">{p.done ? 'DONE ✦' : `${pct}%`}</span>
       </div>
       <div className="goal-track">
         <div className={`goal-fill${p.done ? ' done' : ''}`} style={{ width: `${pct}%` }} />

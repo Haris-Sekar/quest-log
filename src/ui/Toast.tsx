@@ -34,7 +34,10 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   return (
     <ToastContext.Provider value={push}>
       {children}
-      <div className={`toast${current ? ' show' : ''}`} role="status">
+      <div
+        className={`toast${current ? ' show' : ''}${current && /🏆|🔥|⬆|✦|💍/.test(current.title) ? ' gold' : ''}`}
+        role="status"
+      >
         {current && (
           <>
             <b>{current.title}</b>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { daysToKalyanam } from '../data/deadline'
 import { QUEST_LIMITS, STREAK_MIN, WEIGH_XP, newQuestId } from '../data/quests'
 import { daysBetween, todayKey } from '../state/dates'
 import { dayQuestCount } from '../state/stats'
@@ -221,23 +222,36 @@ const DayMeter = ({ state }: { state: TrackerState }) => {
   const n = dayQuestCount(state.days[todayKey()], state.quests)
   const bankMin = Math.min(STREAK_MIN, total)
   const banked = total > 0 && n >= bankMin
+  const perfect = total > 0 && n === total
   const left = Math.max(0, bankMin - n)
+
+  const label =
+    total === 0 ? 'NO QUESTS YET' : perfect ? 'PERFECT DAY ✦' : banked ? 'STREAK BANKED ✓' : `${left} MORE TO BANK`
+  const labelCls = perfect ? ' perfect' : banked ? ' safe' : ''
+
   return (
     <div className="card">
-      <div className="day-meter">
-        <div className="track">
-          <div className="fill" style={{ width: `${total ? (n / total) * 100 : 0}%` }} />
-        </div>
-        <span className="label">
+      <div className="day-meter-head">
+        <span className={`day-meter-lbl${labelCls}`}>{label}</span>
+        <span className="day-meter-count">
           {n} / {total}
         </span>
+      </div>
+      <div className="day-segs" role="img" aria-label={`${n} of ${total} quests done`}>
+        {total === 0 ? (
+          <div className="seg-cell" />
+        ) : (
+          state.quests.map((q, i) => <div key={q.id} className={`seg-cell${i < n ? ' on' : ''}`} />)
+        )}
       </div>
       <div className={`streak-note${banked ? ' safe' : ''}`}>
         {total === 0
           ? 'Add a quest to start banking streak days.'
-          : banked
-            ? '🔥 Streak day banked. See you tomorrow.'
-            : `Complete ${left} more quest${left > 1 ? 's' : ''} to bank today as a streak day.`}
+          : perfect
+            ? '🔥 Perfect day, machan. Every quest cleared.'
+            : banked
+              ? '🔥 Streak day banked. See you tomorrow.'
+              : `Complete ${left} more quest${left > 1 ? 's' : ''} to bank today as a streak day.`}
       </div>
     </div>
   )
@@ -278,6 +292,11 @@ const TodayRail = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
         <RailStat label="Kg lost" value={stats.lost.toFixed(1)} unit="kg" accent />
         <RailStat label="Kg to goal" value={toGo.toFixed(1)} unit="kg" />
         <RailStat label="Perfect days" value={stats.perfectDays} />
+      </div>
+      <div className="card deadline-card">
+        <div className="deadline-title">The Kalyanam 💍</div>
+        <div className="deadline-num">{daysToKalyanam()}</div>
+        <div className="deadline-sub">days out</div>
       </div>
     </aside>
   )

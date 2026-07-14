@@ -53,6 +53,8 @@ const Meter = ({
   const pct = Math.min(100, Math.round((value / target) * 100))
   const over = value > target
   const state = over ? (overIsBad ? 'over' : 'hit') : value >= target ? 'hit' : ''
+  // Calories fill lime→red (over is bad); protein fills gold→lime (target is a floor).
+  const tone = overIsBad ? 'cal' : 'pro'
   return (
     <div className="macro">
       <div className="macro-head">
@@ -63,7 +65,7 @@ const Meter = ({
         </span>
       </div>
       <div className="track">
-        <div className={`fill ${state}`} style={{ width: `${pct}%` }} />
+        <div className={`fill ${tone} ${state}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   )

@@ -20,6 +20,9 @@ export const Hud = ({ stats }: { stats: Stats }) => {
         </div>
       </div>
       <div className="streak-chip">
+        <span className="flame" aria-hidden>
+          🔥
+        </span>
         <b>{stats.curStreak}</b>
         <span>streak</span>
       </div>
