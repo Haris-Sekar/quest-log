@@ -34,7 +34,9 @@ export const TabBar = ({ tab, onTab }: Pick<NavProps, 'tab' | 'onTab'>) => (
           className={`tab-btn${tab === t.id ? ' on' : ''}`}
           onClick={() => onTab(t.id)}
         >
-          <span className="t-ico">{t.icon}</span>
+          <span className="t-ico">
+            <t.Icon />
+          </span>
           <span className="t-lbl">{t.label}</span>
         </button>
       ))}
@@ -58,7 +60,10 @@ export const Sidebar = ({ tab, onTab, stats }: NavProps) => {
             className={`side-btn${tab === t.id ? ' on' : ''}`}
             onClick={() => onTab(t.id)}
           >
-            <span className="t-ico">{t.icon}</span> {t.label}
+            <span className="t-ico">
+              <t.Icon />
+            </span>{' '}
+            {t.label}
           </button>
         ))}
       </nav>
