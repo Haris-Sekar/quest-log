@@ -39,7 +39,7 @@ export const App = () => {
       <Sidebar tab={tab} onTab={setTab} stats={stats} order={order} onReorder={() => setReordering(true)} />
       <div className="main">
         <header className="hud">
-          <Hud stats={stats} />
+          <Hud stats={stats} onReorder={() => setReordering(true)} />
         </header>
         <main className="shell">
           {tab === 'today' && <Today state={state} stats={stats} />}

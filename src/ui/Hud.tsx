@@ -1,7 +1,7 @@
 import { levelInfo } from '../data/ranks'
 import type { Stats } from '../state/types'
 
-export const Hud = ({ stats }: { stats: Stats }) => {
+export const Hud = ({ stats, onReorder }: { stats: Stats; onReorder?: () => void }) => {
   const li = levelInfo(stats.xp)
   return (
     <div className="hud-inner">
@@ -26,6 +26,11 @@ export const Hud = ({ stats }: { stats: Stats }) => {
         <b>{stats.curStreak}</b>
         <span>streak</span>
       </div>
+      {onReorder && (
+        <button className="hud-reorder" aria-label="Reorder tabs" onClick={onReorder}>
+          ⇅
+        </button>
+      )}
     </div>
   )
 }

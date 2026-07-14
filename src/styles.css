@@ -88,8 +88,9 @@ h1, h3, p { margin: 0; }
 .rank-name {
   font-family: var(--disp); font-weight: 700; font-size: 12px;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--text);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.xp-num { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.xp-num { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; flex: none; }
 .xp-track { margin-top: 7px; height: 6px; border-radius: 99px; background: var(--border); overflow: hidden; }
 .xp-fill {
   height: 100%; border-radius: 99px;
@@ -106,6 +107,12 @@ h1, h3, p { margin: 0; }
 .streak-chip .flame { font-size: 13px; line-height: 1; }
 .streak-chip b { font-size: 15px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 .streak-chip span { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.hud-reorder {
+  flex: none; width: 42px; height: 42px; border-radius: 10px;
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--muted);
+  font-size: 18px; line-height: 1; display: grid; place-items: center;
+}
+.hud-reorder:hover { color: var(--text); border-color: var(--muted); }
 
 /* ── Common blocks ── */
 .eyebrow {
