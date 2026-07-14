@@ -21,7 +21,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'b120', r: 'epic', icon: '🌙', name: 'Snacker Banished', desc: 'Below 120 kg', chk: (_s, t) => t.minW < 120 },
   { id: 'b110', r: 'epic', icon: '🗿', name: 'Golem Broken', desc: 'Below 110 kg', chk: (_s, t) => t.minW < 110 },
   { id: 'b100', r: 'epic', icon: '⚡', name: 'Double Digits', desc: 'Below 100 kg', chk: (_s, t) => t.minW < 100 },
-  { id: 'b90', r: 'legendary', icon: '👑', name: 'GG — Final Boss Down', desc: '90 kg. Kalyanam ready.', chk: (_s, t) => t.minW <= 90 },
+  { id: 'b90', r: 'legendary', icon: '👑', name: 'GG — Final Boss Down', desc: '90 kg. Target Done!.', chk: (_s, t) => t.minW <= 90 },
   { id: 'lost10', r: 'rare', icon: '📉', name: '-10 Club', desc: '10 kg lost from start', chk: (_s, t) => t.lost >= 10 },
   { id: 'lost30', r: 'epic', icon: '🚀', name: 'Halfway Hero', desc: '30 kg lost — halfway there', chk: (_s, t) => t.lost >= 30 },
 ]

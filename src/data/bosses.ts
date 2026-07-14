@@ -6,7 +6,7 @@ export const BOSSES: BossDef[] = [
   { w: 120, name: 'The Midnight Snacker', tip: 'Dies to 7pm dinners.' },
   { w: 110, name: 'The Plateau Golem', tip: 'Slow fight. Trust the process.' },
   { w: 100, name: 'The Century Titan', tip: 'Break into double digits.' },
-  { w: 90, name: 'KALYANAM — Final Boss', tip: 'Wedding ready. GG.' },
+  { w: 90, name: 'The Target — Final Boss', tip: 'Target achieved. GG.' },
 ]
 
 /** The 90kg finale counts as defeated at exactly 90; every other boss needs strictly below. */

@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { daysToKalyanam } from '../data/deadline'
+import { daysToKalyanam, KALYANAM_DATE } from '../data/deadline'
 import { QUEST_LIMITS, STREAK_MIN, WEIGH_XP, newQuestId } from '../data/quests'
 import { daysBetween, todayKey } from '../state/dates'
 import { dayQuestCount } from '../state/stats'
 import type { QuestDef, QuestId, Stats, TrackerState } from '../state/types'
+import { ShareModal } from '../ui/ShareModal'
 import { useStore } from '../store'
 import { useToast } from '../ui/Toast'
 
@@ -294,7 +295,7 @@ const TodayRail = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
         <RailStat label="Perfect days" value={stats.perfectDays} />
       </div>
       <div className="card deadline-card">
-        <div className="deadline-title">The Kalyanam 💍</div>
+        <div className="deadline-title">Target Date - {KALYANAM_DATE}</div>
         <div className="deadline-num">{daysToKalyanam()}</div>
         <div className="deadline-sub">days out</div>
       </div>
@@ -303,6 +304,7 @@ const TodayRail = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
 }
 
 export const Today = ({ state, stats }: { state: TrackerState; stats: Stats }) => {
+  const [sharing, setSharing] = useState(false)
   const dayNo = Math.max(1, daysBetween(state.startDate, todayKey()) + 1)
   const dateLabel = new Date().toLocaleDateString('en-IN', {
     weekday: 'long',
@@ -320,8 +322,12 @@ export const Today = ({ state, stats }: { state: TrackerState; stats: Stats }) =
         <Nudge state={state} stats={stats} />
         <QuestList state={state} />
         <DayMeter state={state} />
+        <button className="btn wide" onClick={() => setSharing(true)}>
+          ↗ Share today's run
+        </button>
       </div>
       <TodayRail state={state} stats={stats} />
+      {sharing && <ShareModal state={state} stats={stats} onClose={() => setSharing(false)} />}
     </div>
   )
 }
