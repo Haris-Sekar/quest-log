@@ -20,9 +20,16 @@ export type TabId =
   | 'awards'
   | 'plan'
 
-// Nav chrome uses one cohesive line-icon set (see icons.tsx) — no emoji, no
-// mismatched Unicode glyphs. Emoji stays in content (quests, awards, streak).
-export const TABS: Array<{ id: TabId; Icon: FC; label: string }> = [
+export interface TabDef {
+  id: TabId
+  Icon: FC
+  label: string
+}
+
+// Default order. Nav chrome uses one cohesive line-icon set (see icons.tsx) —
+// no emoji, no mismatched Unicode glyphs. The live order is user-reorderable
+// and persisted (see useTabOrder).
+export const TABS: TabDef[] = [
   { id: 'today', Icon: IconToday, label: 'Today' },
   { id: 'meals', Icon: IconMeals, label: 'Meals' },
   { id: 'tasks', Icon: IconTasks, label: 'Tasks' },
@@ -32,3 +39,9 @@ export const TABS: Array<{ id: TabId; Icon: FC; label: string }> = [
   { id: 'awards', Icon: IconAwards, label: 'Awards' },
   { id: 'plan', Icon: IconPlan, label: 'Plan' },
 ]
+
+export const TAB_IDS: TabId[] = TABS.map((t) => t.id)
+
+export const TAB_MAP: Record<TabId, TabDef> = Object.fromEntries(
+  TABS.map((t) => [t.id, t]),
+) as Record<TabId, TabDef>

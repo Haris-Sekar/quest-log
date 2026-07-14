@@ -536,15 +536,21 @@ input::placeholder { color: var(--disabled); }
   padding-bottom: env(safe-area-inset-bottom);
   backdrop-filter: blur(10px);
 }
-.tabbar .tabs { display: flex; width: 100%; max-width: 720px; }
+/* Four tabs visible at a time; the rest scroll horizontally. */
+.tabbar .tabs {
+  display: flex; width: 100%; max-width: 720px;
+  overflow-x: auto; scroll-behavior: smooth;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.tabbar .tabs::-webkit-scrollbar { display: none; }
 .tab-btn {
-  flex: 1; min-width: 0; background: none; border: none; color: var(--muted);
-  padding: 9px 2px 10px; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  flex: 0 0 25%; min-width: 0; background: none; border: none; color: var(--muted);
+  padding: 12px 2px 13px; display: flex; flex-direction: column; align-items: center; gap: 5px;
   position: relative; transition: color 0.15s;
 }
 .tab-btn .t-ico { display: flex; align-items: center; justify-content: center; }
-.t-ico svg { width: 21px; height: 21px; display: block; }
-.tab-btn .t-lbl { font-family: var(--mono); font-size: 7.5px; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.t-ico svg { width: 26px; height: 26px; display: block; }
+.tab-btn .t-lbl { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
 .tab-btn.on { color: var(--lime); }
 .tab-btn.on::before {
   content: ""; position: absolute; top: 0; left: 30%; right: 30%; height: 2px;
@@ -595,6 +601,44 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lime); outl
 .share-status { color: var(--muted); font-family: var(--mono); font-size: 13px; padding: 40px 16px; text-align: center; }
 .share-actions { display: flex; flex-direction: column; gap: 8px; }
 .share-actions .btn { margin-top: 0; }
+
+/* ── Reorder tabs sheet ── */
+.reorder-hint { font-size: 12.5px; color: var(--muted); margin: -4px 0 2px; }
+.reorder-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.reorder-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--border-strong); border-radius: 11px;
+  padding: 10px 12px; user-select: none;
+}
+.reorder-row.dragging { border-color: var(--lime-50); opacity: 0.85; }
+/* The bar shows the first four — mark the fold after row 4. */
+.reorder-row.fold { margin-bottom: 12px; position: relative; }
+.reorder-row.fold::after {
+  content: "SCROLLS IN BAR ↓"; position: absolute; left: 0; right: 0; bottom: -20px;
+  text-align: center; font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--disabled);
+}
+.reorder-grip { color: var(--muted); font-size: 16px; cursor: grab; line-height: 1; }
+.reorder-ico { display: flex; align-items: center; color: var(--text-soft); }
+.reorder-ico svg { width: 20px; height: 20px; }
+.reorder-label { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; }
+.reorder-badge {
+  font-family: var(--mono); font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--lime); border: 1px solid var(--lime-50); border-radius: 999px; padding: 2px 7px; flex: none;
+}
+.reorder-moves { display: flex; gap: 4px; flex: none; }
+.reorder-moves button {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text-soft); font-size: 14px; line-height: 1;
+}
+.reorder-moves button:hover:not(:disabled) { border-color: var(--muted); }
+.reorder-moves button:disabled { opacity: 0.3; cursor: default; }
+
+.side-reorder {
+  background: none; border: 1px solid var(--border-strong); border-radius: 8px;
+  color: var(--muted); padding: 7px 10px; font-size: 13px; text-align: left;
+}
+.side-reorder:hover { color: var(--text); border-color: var(--muted); }
 
 /* ── Sign-in & splash ── */
 .signin-wrap, .splash { min-height: 100vh; display: grid; place-items: center; padding: 20px; }

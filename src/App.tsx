@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { SignIn } from './auth/SignIn'
 import { Awards } from './pages/Awards'
 import { CalendarView } from './pages/CalendarView'
@@ -12,7 +12,9 @@ import { computeStats } from './state/stats'
 import { useStore } from './store'
 import { Hud } from './ui/Hud'
 import { Sidebar, TabBar } from './ui/Nav'
+import { ReorderTabs } from './ui/ReorderTabs'
 import { useHashTab } from './ui/useHashTab'
+import { useTabOrder } from './ui/useTabOrder'
 
 const Splash = ({ text }: { text: string }) => (
   <div className="splash">
@@ -24,6 +26,8 @@ const Splash = ({ text }: { text: string }) => (
 export const App = () => {
   const { mode, user, authReady, state } = useStore()
   const [tab, setTab] = useHashTab()
+  const [order, setOrder, resetOrder] = useTabOrder()
+  const [reordering, setReordering] = useState(false)
   const stats = useMemo(() => (state ? computeStats(state) : null), [state])
 
   if (!authReady) return <Splash text="Loading…" />
@@ -32,7 +36,7 @@ export const App = () => {
 
   return (
     <div className="app">
-      <Sidebar tab={tab} onTab={setTab} stats={stats} />
+      <Sidebar tab={tab} onTab={setTab} stats={stats} order={order} onReorder={() => setReordering(true)} />
       <div className="main">
         <header className="hud">
           <Hud stats={stats} />
@@ -48,7 +52,15 @@ export const App = () => {
           {tab === 'plan' && <Plan state={state} stats={stats} />}
         </main>
       </div>
-      <TabBar tab={tab} onTab={setTab} />
+      <TabBar tab={tab} onTab={setTab} order={order} onReorder={() => setReordering(true)} />
+      {reordering && (
+        <ReorderTabs
+          order={order}
+          onChange={setOrder}
+          onReset={resetOrder}
+          onClose={() => setReordering(false)}
+        />
+      )}
     </div>
   )
 }
